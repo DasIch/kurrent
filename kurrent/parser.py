@@ -12,6 +12,7 @@ import codecs
 
 from . import ast
 from .utils import PushableIterator
+from ._compat import PY2, implements_iterator
 
 
 # Python 3.3 does not support ur'' syntax
@@ -19,9 +20,14 @@ _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
+@implements_iterator
 class LineIterator(PushableIterator):
-    def next(self):
-        return super(LineIterator, self).next().rstrip(u'\r\n')
+    def __next__(self):
+        if PY2:
+            line = super(LineIterator, self).next()
+        else:
+            line = super(LineIterator, self).__next__()
+        return line.rstrip(u'\r\n')
 
     def next_block(self):
         lines = []

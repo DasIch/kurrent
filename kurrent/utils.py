@@ -8,7 +8,10 @@
 """
 from functools import wraps
 
+from ._compat import implements_iterator
 
+
+@implements_iterator
 class PushableIterator(object):
     def __init__(self, iterable):
         self.iterator = iter(iterable)
@@ -17,7 +20,7 @@ class PushableIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.remaining:
             return self.remaining.pop()
         return next(self.iterator)
