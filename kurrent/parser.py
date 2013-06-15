@@ -15,8 +15,8 @@ from .utils import PushableIterator
 
 
 # Python 3.3 does not support ur'' syntax
-_header_re = re.compile(r'(#+)\s*(.*)'.decode('utf-8'))
-_ordered_list_item_re = re.compile(r'(\d+\.)\s*(.*)'.decode('utf-8'))
+_header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
+_ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
 class LineIterator(PushableIterator):
