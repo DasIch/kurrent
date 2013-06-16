@@ -97,7 +97,7 @@ class KurrentWriter(Writer):
     def write_OrderedList(self, node):
         writer = self._write_list(node)
         next(writer)
-        for index in count(start=1):
+        for index in count(1):
             try:
                 writer.send(u'%d. ' % index)
             except StopIteration:
