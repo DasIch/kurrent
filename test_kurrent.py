@@ -10,7 +10,7 @@ from io import StringIO
 
 from kurrent import ast
 from kurrent.parser import Parser, LineIterator
-from kurrent.writers import KurrentWriter
+from kurrent.writers import KurrentWriter, HTML5Writer
 
 import pytest
 
@@ -281,12 +281,18 @@ class TestOrderedList(object):
             assert item.children[i].text == text
 
 
-class TestKurrentWriter(object):
+class WriterTest(object):
+    writer_cls = None
+
     def check_node(self, node, result):
         __tracebackhide__ = True
         stream = StringIO()
-        KurrentWriter(stream).write_node(node)
+        self.writer_cls(stream).write_node(node)
         assert stream.getvalue() == result
+
+
+class TestKurrentWriter(WriterTest):
+    writer_cls = KurrentWriter
 
     def test_write_paragraph(self):
         document = ast.Document('<test>')
@@ -347,3 +353,26 @@ class TestKurrentWriter(object):
                               u'2. bar\n'
                               u'3. 1. baz\n'
                               u'\n')
+
+
+class TestHTML5Writer(WriterTest):
+    writer_cls = HTML5Writer
+
+    def test_write_paragraph(self):
+        self.check_node(ast.Paragraph(u'foo'), u'<p>foo</p>')
+
+    def test_write_header(self):
+        self.check_node(ast.Header(u'foo', 1), u'<h1>foo</h1>')
+
+    def test_write_unordered_list(self):
+        list = ast.UnorderedList()
+        for text in [u'foo', u'bar']:
+            item = ast.ListItem()
+            item.children.append(ast.Paragraph(text))
+            list.children.append(item)
+        self.check_node(list, u'<ul><li><p>foo</p></li><li><p>bar</p></li></ul>')
+
+    def test_write_document(self):
+        document = ast.Document('<test>')
+        document.children.append(ast.Paragraph(u'foo'))
+        self.check_node(document, '<!doctype html><title></title><p>foo</p>')

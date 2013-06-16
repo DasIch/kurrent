@@ -111,3 +111,33 @@ class KurrentWriter(Writer):
                 with self.indent(u' ' * len(label)):
                     self.write_node(child)
         self.write_block_newline()
+
+
+class HTML5Writer(Writer):
+    def write_Paragraph(self, node):
+        self.write(u'<p>')
+        self.write(node.text)
+        self.write(u'</p>')
+
+    def write_Header(self, node):
+        self.write(u'<h%d>' % node.level)
+        self.write(node.text)
+        self.write(u'</h%d>' % node.level)
+
+    @contextmanager
+    def write_UnorderedList(self, node):
+        self.write(u'<ul>')
+        yield True
+        self.write(u'</ul>')
+
+    @contextmanager
+    def write_ListItem(self, node):
+        self.write(u'<li>')
+        yield True
+        self.write(u'</li>')
+
+    @contextmanager
+    def write_Document(self, node):
+        self.write(u'<!doctype html>')
+        self.write(u'<title></title>')
+        yield True
