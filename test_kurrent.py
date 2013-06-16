@@ -6,8 +6,11 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+from io import StringIO
+
 from kurrent import ast
 from kurrent.parser import Parser, LineIterator
+from kurrent.writers import KurrentWriter
 
 import pytest
 
@@ -276,3 +279,71 @@ class TestOrderedList(object):
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(item.children[i], ast.Paragraph)
             assert item.children[i].text == text
+
+
+class TestKurrentWriter(object):
+    def check_node(self, node, result):
+        __tracebackhide__ = True
+        stream = StringIO()
+        KurrentWriter(stream).write_node(node)
+        assert stream.getvalue() == result
+
+    def test_write_paragraph(self):
+        document = ast.Document('<test>')
+        document.children.extend([
+            ast.Paragraph(u'Hello'),
+            ast.Paragraph(u'World')
+        ])
+        self.check_node(document, u'Hello\n'
+                                  u'\n'
+                                  u'World\n'
+                                  u'\n')
+
+    def test_write_header(self):
+        self.check_node(ast.Header(u'Hello World', 1),
+                        u'# Hello World\n'
+                        u'\n')
+
+    def test_write_unordered_list(self):
+        list = ast.UnorderedList()
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'foo'))
+        list.children.append(item)
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'bar'))
+        list.children.append(item)
+        self.check_node(list, u'* foo\n'
+                              u'* bar\n'
+                              u'\n')
+
+        nested = ast.UnorderedList()
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'baz'))
+        nested.children.append(item)
+        list.children.append(nested)
+        self.check_node(list, u'* foo\n'
+                              u'* bar\n'
+                              u'* * baz\n'
+                              u'\n')
+
+    def test_write_ordered_list(self):
+        list = ast.OrderedList()
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'foo'))
+        list.children.append(item)
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'bar'))
+        list.children.append(item)
+        self.check_node(list, u'1. foo\n'
+                              u'2. bar\n'
+                              u'\n')
+
+        nested = ast.OrderedList()
+        item = ast.ListItem()
+        item.children.append(ast.Paragraph(u'baz'))
+        nested.children.append(item)
+        list.children.append(nested)
+        self.check_node(list, u'1. foo\n'
+                              u'2. bar\n'
+                              u'3. 1. baz\n'
+                              u'\n')
