@@ -133,10 +133,10 @@ class Parser(object):
             self.stream.close()
 
     def parse(self):
-        root = ast.Document(self.filename)
-        for block in self.lines.blockwise():
-            root.children.append(self.parse_block(list(block)))
-        return root
+        return ast.Document(
+            self.filename,
+            [self.parse_block(list(block)) for block in self.lines.blockwise()]
+        )
 
     def parse_block(self, lines):
         if len(lines) == 1:
@@ -191,8 +191,11 @@ class Parser(object):
             stripped = strip(line)
             indentation_level = len(line) - len(stripped)
             lineiter.push(u' ' * indentation_level + stripped)
-            item = ast.ListItem()
-            for block in lineiter.until(match).unindented(indentation_level).blockwise():
-                item.children.append(self.parse_block(list(block)))
-            rv.children.append(item)
+            rv.children.append(
+                ast.ListItem([
+                    self.parse_block(list(block))
+                    for block in
+                    lineiter.until(match).unindented(indentation_level).blockwise()
+                ])
+            )
         return rv

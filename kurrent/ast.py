@@ -22,9 +22,11 @@ class ASTNode(object):
 
 
 class ParentNode(ASTNode):
-    def __init__(self):
+    def __init__(self, children=None):
         super(ParentNode, self).__init__()
-        self.children = []
+        if children is None:
+            children = []
+        self.children = children
 
     @property
     def start(self):
@@ -38,8 +40,8 @@ class ParentNode(ASTNode):
 
 
 class Document(ParentNode):
-    def __init__(self, filename):
-        super(Document, self).__init__()
+    def __init__(self, filename, children=None):
+        super(Document, self).__init__(children=children)
         self.filename = filename
 
 
