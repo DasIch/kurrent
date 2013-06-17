@@ -78,8 +78,13 @@ class TestLineIterator(object):
             assert block[index].end == ast.Location(lineno, end)
 
     def test_until(self):
-        iterator = LineIterator([u'foo', u'bar', u'baz'])
-        assert list(iterator.until(lambda l: l == u'baz')) == [u'foo', u'bar']
+        iterator = LineIterator([u'foo', u'bar', u'baz']).until(lambda l: l == u'baz')
+        for lineno, content in enumerate([u'foo', u'bar'], 1):
+            line = next(iterator)
+            assert line == content
+            assert line.start == ast.Location(lineno, 1)
+            assert line.end == ast.Location(lineno, 4)
+        assert list(iterator) == []
 
     def test_unindented(self):
         iterator = LineIterator([u'  foo', u'  bar', u'  baz']).unindented(2)
