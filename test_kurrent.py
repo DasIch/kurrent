@@ -9,7 +9,7 @@
 from io import StringIO
 
 from kurrent import ast
-from kurrent.parser import Parser, LineIterator
+from kurrent.parser import Parser, LineIterator, BadPath
 from kurrent.writers import KurrentWriter, HTML5Writer
 
 import pytest
@@ -41,6 +41,18 @@ class TestLineIterator(object):
     def test_until(self):
         iterator = LineIterator([u'foo', u'bar', u'baz'])
         assert list(iterator.until(lambda l: l == u'baz')) == [u'foo', u'bar']
+
+    def test_unindented(self):
+        iterator = LineIterator([u'  foo', u'  bar', u'  baz'])
+        assert list(iterator.unindented(2)) == [u'foo', u'bar', u'baz']
+
+        iterator = LineIterator([u'foo'])
+        with pytest.raises(BadPath):
+            list(iterator.unindented(2))
+
+        iterator = LineIterator([u'  foo', u'  bar', u' baz'])
+        with pytest.raises(BadPath):
+            list(iterator.unindented(2))
 
 
 class TestParagraph(object):

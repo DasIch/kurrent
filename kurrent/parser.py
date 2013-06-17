@@ -77,6 +77,16 @@ class LineIterator(object):
         while True:
             yield self.next_block()
 
+    def unindented(self, spaces):
+        for line in self:
+            if line:
+                if len(line) < spaces:
+                    raise BadPath()
+                if line[:spaces].strip():
+                    raise BadPath()
+                line = line[spaces:]
+            yield line
+
 
 class ParserFlow(BaseException):
     pass
@@ -178,15 +188,8 @@ class Parser(object):
                 raise BadPath()
             itemlines = [strip(line)]
             indentation_level = len(line) - len(itemlines[0])
-            for line in lineiter.until(match):
-                if line:
-                    if len(line) < indentation_level:
-                        raise BadPath()
-                    if line[:indentation_level].strip():
-                        raise BadPath()
-                    itemlines.append(line[indentation_level:])
-                else:
-                    itemlines.append(line)
+            for line in lineiter.until(match).unindented(indentation_level):
+                itemlines.append(line)
             item = ast.ListItem()
             for block in LineIterator(itemlines).blockwise():
                 item.children.append(self.parse_block(block))
