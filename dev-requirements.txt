@@ -1,0 +1,5 @@
+# Requirements that are useful for development in addition to the ones
+# specified in `install_requires`.
+tox>=1.4.3
+pypissh>=1.4
+pyflakes>=0.7.2
