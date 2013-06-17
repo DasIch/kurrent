@@ -73,6 +73,9 @@ class LineIterator(object):
                     yield line
         return self.__class__(inner(), self.lineno, self.columnno)
 
+    def exhaust_until(self, condition):
+        list(self.until(condition))
+
     def next_block(self):
         lines = []
         line = next(self)
@@ -81,12 +84,11 @@ class LineIterator(object):
             try:
                 line = next(self)
                 if not line:
-                    empty_lines = list(self.until(lambda line: line.strip()))
+                    self.exhaust_until(lambda line: line.strip())
                     line = next(self)
                     if line.startswith(u' '):
                         lines.append(u'')
                     else:
-                        self.push_many(empty_lines)
                         self.push(line)
                         break
             except StopIteration:
