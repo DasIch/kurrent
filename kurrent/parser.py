@@ -11,7 +11,7 @@ import re
 import codecs
 
 from . import ast
-from ._compat import implements_iterator
+from ._compat import implements_iterator, text_type
 
 
 # Python 3.3 does not support ur'' syntax
@@ -19,10 +19,20 @@ _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
+class Line(text_type):
+    def __new__(cls, string, lineno, columnno):
+        self = super(Line, cls).__new__(cls, string)
+        self.lineno = lineno
+        self.columnno = columnno
+        return self
+
+
 @implements_iterator
 class LineIterator(object):
-    def __init__(self, lines):
+    def __init__(self, lines, lineno=0, columnno=1):
         self.lines = iter(lines)
+        self.lineno = lineno
+        self.columnno = columnno
         self.remaining = []
 
     def __iter__(self):
@@ -33,9 +43,11 @@ class LineIterator(object):
             line = self.remaining.pop()
         else:
             line = next(self.lines)
-        return line.rstrip(u'\r\n')
+        self.lineno += 1
+        return Line(line.rstrip(u'\r\n'), self.lineno, self.columnno)
 
     def push(self, line):
+        self.lineno -= 1
         self.remaining.append(line)
 
     def push_many(self, lines):
@@ -51,7 +63,7 @@ class LineIterator(object):
                     break
                 else:
                     yield line
-        return self.__class__(inner())
+        return self.__class__(inner(), self.lineno, self.columnno)
 
     def next_block(self):
         lines = []
@@ -71,7 +83,7 @@ class LineIterator(object):
                         break
             except StopIteration:
                 break
-        return self.__class__(lines)
+        return self.__class__(lines, lines[0].lineno, lines[0].columnno)
 
     def blockwise(self):
         while True:
@@ -87,7 +99,7 @@ class LineIterator(object):
                         raise BadPath()
                     line = line[spaces:]
                 yield line
-        return self.__class__(inner())
+        return self.__class__(inner(), self.lineno, self.columnno + spaces)
 
 
 class ParserFlow(BaseException):

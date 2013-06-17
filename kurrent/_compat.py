@@ -20,5 +20,8 @@ if PY2:
         cls.next = cls.__next__
         del cls.__next__
         return cls
+
+    text_type = unicode
 else:
     implements_iterator = _identity
+    text_type = str

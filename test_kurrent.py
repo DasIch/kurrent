@@ -18,7 +18,21 @@ import pytest
 class TestLineIterator(object):
     def test_next(self):
         iterator = LineIterator([u'foo', u'bar\n', u'baz\r', u'spam\r\n'])
-        assert list(iterator) == [u'foo', u'bar', u'baz', u'spam']
+        for lineno, content in enumerate([u'foo', u'bar', u'baz', u'spam'], 1):
+            line = next(iterator)
+            assert line == content
+            assert line.lineno == lineno
+            assert line.columnno == 1
+
+    def test_push(self):
+        iterator = LineIterator([u'foo', u'bar'])
+        line = next(iterator)
+        assert line == u'foo'
+        assert line.lineno == 1
+        iterator.push(line)
+        line = next(iterator)
+        assert line == u'foo'
+        assert line.lineno == 1
 
     def test_next_block(self):
         iterator = LineIterator([u'foobar'])
@@ -43,8 +57,12 @@ class TestLineIterator(object):
         assert list(iterator.until(lambda l: l == u'baz')) == [u'foo', u'bar']
 
     def test_unindented(self):
-        iterator = LineIterator([u'  foo', u'  bar', u'  baz'])
-        assert list(iterator.unindented(2)) == [u'foo', u'bar', u'baz']
+        iterator = LineIterator([u'  foo', u'  bar', u'  baz']).unindented(2)
+        for lineno, content in enumerate([u'foo', u'bar', u'baz'], 1):
+            line = next(iterator)
+            assert line == content
+            assert line.lineno == lineno
+            assert line.columnno == 3
 
         iterator = LineIterator([u'foo'])
         with pytest.raises(BadPath):
