@@ -11,8 +11,7 @@ import re
 import codecs
 
 from . import ast
-from .utils import PushableIterator
-from ._compat import PY2, implements_iterator
+from ._compat import implements_iterator
 
 
 # Python 3.3 does not support ur'' syntax
@@ -21,13 +20,36 @@ _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
 @implements_iterator
-class LineIterator(PushableIterator):
+class LineIterator(object):
+    def __init__(self, lines):
+        self.lines = iter(lines)
+        self.remaining = []
+
+    def __iter__(self):
+        return self
+
     def __next__(self):
-        if PY2:
-            line = super(LineIterator, self).next()
+        if self.remaining:
+            line = self.remaining.pop()
         else:
-            line = super(LineIterator, self).__next__()
+            line = next(self.lines)
         return line.rstrip(u'\r\n')
+
+    def push(self, line):
+        self.remaining.append(line)
+
+    def push_many(self, lines):
+        for line in lines:
+            self.push(line)
+
+    def until(self, condition):
+        while True:
+            line = next(self)
+            if condition(line):
+                self.push(line)
+                break
+            else:
+                yield line
 
     def next_block(self):
         lines = []
@@ -148,7 +170,7 @@ class Parser(object):
 
     def _parse_list(self, node_cls, match, strip, lines):
         rv = node_cls()
-        lineiter = PushableIterator(lines)
+        lineiter = LineIterator(lines)
         for line in lineiter:
             if not match(line):
                 raise BadPath()
