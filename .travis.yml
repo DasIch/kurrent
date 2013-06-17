@@ -6,4 +6,6 @@ python:
   - "pypy"
   - "3.3"
 
+install: pip install --editable .
+
 script: py.test
