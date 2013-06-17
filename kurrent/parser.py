@@ -103,9 +103,7 @@ class LineIterator(object):
         def inner():
             for line in self:
                 if line:
-                    if len(line) < spaces:
-                        raise BadPath()
-                    if line[:spaces].strip():
+                    if len(line) < spaces or line[:spaces].strip():
                         raise BadPath()
                     line = line[spaces:]
                 yield line
