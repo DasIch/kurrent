@@ -26,6 +26,14 @@ class Line(text_type):
         self.columnno = columnno
         return self
 
+    @property
+    def start(self):
+        return ast.Location(self.lineno, self.columnno)
+
+    @property
+    def end(self):
+        return ast.Location(self.lineno, self.columnno + len(self))
+
 
 @implements_iterator
 class LineIterator(object):
@@ -83,7 +91,7 @@ class LineIterator(object):
                         break
             except StopIteration:
                 break
-        return self.__class__(lines, lines[0].lineno, lines[0].columnno)
+        return self.__class__(lines, lines[0].lineno - 1, lines[0].columnno)
 
     def blockwise(self):
         while True:
@@ -164,13 +172,13 @@ class Parser(object):
         return self.parse_paragraph(lines)
 
     def parse_paragraph(self, lines):
-        return ast.Paragraph(u' '.join(lines))
+        return ast.Paragraph(u' '.join(lines), lines[0].start, lines[-1].end)
 
     def parse_header(self, line):
         match = _header_re.match(line)
         level_indicator = match.group(1)
         text = match.group(2)
-        return ast.Header(text, len(level_indicator))
+        return ast.Header(text, len(level_indicator), line.start, line.end)
 
     def parse_unordered_list(self, lines):
         return self._parse_list(

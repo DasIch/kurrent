@@ -78,21 +78,33 @@ class TestParagraph(object):
         document = Parser.from_string(u'foobar').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == u'foobar'
+        p = document.children[0]
+        assert p.text == u'foobar'
+        assert p.start == ast.Location(1, 1)
+        assert p.end == ast.Location(1, 7)
 
     def test_muliple_lines(self):
         document = Parser.from_string(u'foo\nbar').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == u'foo bar'
+        p = document.children[0]
+        assert p.text == u'foo bar'
+        assert p.start == ast.Location(1, 1)
+        assert p.end == ast.Location(2, 4)
 
     def test_multiple_paragraphs(self):
         document = Parser.from_string(u'foo\n\nbar').parse()
         assert len(document.children) == 2
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == u'foo'
+        p = document.children[0]
+        assert p.text == u'foo'
+        assert p.start == ast.Location(1, 1)
+        assert p.end == ast.Location(1, 4)
         assert isinstance(document.children[1], ast.Paragraph)
-        assert document.children[1].text == u'bar'
+        p = document.children[1]
+        assert p.text == u'bar'
+        assert p.start == ast.Location(3, 1)
+        assert p.end == ast.Location(3, 4)
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [
@@ -103,8 +115,11 @@ def test_header(string, text, level):
     document = Parser.from_string(string).parse()
     assert len(document.children) == 1
     assert isinstance(document.children[0], ast.Header)
-    assert document.children[0].text == text
-    assert document.children[0].level == level
+    h = document.children[0]
+    assert h.text == text
+    assert h.level == level
+    assert h.start == ast.Location(1, 1)
+    assert h.end == ast.Location(1, 1 + len(string))
 
 
 class TestUnorderedList(object):
