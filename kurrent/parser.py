@@ -102,11 +102,7 @@ class LineIterator(object):
         return self.__class__(inner(), self.lineno, self.columnno + spaces)
 
 
-class ParserFlow(BaseException):
-    pass
-
-
-class BadPath(ParserFlow):
+class BadPath(BaseException):
     pass
 
 
