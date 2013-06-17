@@ -151,7 +151,9 @@ class Parser(object):
     def parse(self):
         return ast.Document(
             self.filename,
-            [self.parse_block(list(block)) for block in self.lines.blockwise()]
+            children=[
+                self.parse_block(list(block)) for block in self.lines.blockwise()
+            ]
         )
 
     def parse_block(self, lines):

@@ -96,5 +96,8 @@ class TestHTML5Writer(WriterTest):
         self.check_node(list, u'<ul><li><p>foo</p></li><li><p>bar</p></li></ul>')
 
     def test_write_document(self):
-        document = ast.Document('<test>', [ast.Paragraph(u'foo')])
-        self.check_node(document, '<!doctype html><title></title><p>foo</p>')
+        document = ast.Document('<test>', children=[ast.Paragraph(u'foo')])
+        self.check_node(document, u'<!doctype html><title></title><p>foo</p>')
+
+        document = ast.Document('<test>', title=u'foo')
+        self.check_node(document, u'<!doctype html><title>foo</title>')

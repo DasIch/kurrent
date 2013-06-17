@@ -43,9 +43,10 @@ class ParentNode(ASTNode):
 
 
 class Document(ParentNode):
-    def __init__(self, filename, children=None):
+    def __init__(self, filename, title=None, children=None):
         super(Document, self).__init__(children=children)
         self.filename = filename
+        self.title = title
 
 
 class ChildNode(ASTNode):

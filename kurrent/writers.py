@@ -141,5 +141,7 @@ class HTML5Writer(Writer):
     @contextmanager
     def write_Document(self, node):
         self.write(u'<!doctype html>')
-        self.write(u'<title></title>')
+        self.write(u'<title>%s</title>' % (
+            u'' if node.title is None else node.title
+        ))
         yield True
