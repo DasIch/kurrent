@@ -21,7 +21,8 @@ class Location(object):
 
 
 class ASTNode(object):
-    pass
+    def traverse(self):
+        yield self
 
 
 class ParentNode(ASTNode):
@@ -40,6 +41,12 @@ class ParentNode(ASTNode):
     def end(self):
         if self.children:
             return self.children[-1].end
+
+    def traverse(self):
+        yield self
+        for child in self.children:
+            for node in child.traverse():
+                yield node
 
 
 class Document(ParentNode):

@@ -22,6 +22,9 @@ if PY2:
         return cls
 
     text_type = unicode
+
+    from itertools import ifilter
 else:
     implements_iterator = _identity
     text_type = str
+    ifilter = filter
