@@ -91,8 +91,8 @@ class TestLineIterator(object):
         for lineno, content in enumerate([u'foo', u'bar', u'baz'], 1):
             line = next(iterator)
             assert line == content
-            assert line.lineno == lineno
-            assert line.columnno == 3
+            assert line.start == ast.Location(lineno, 3)
+            assert line.end == ast.Location(lineno, 6)
 
         iterator = LineIterator([u'foo'])
         with pytest.raises(BadPath):
