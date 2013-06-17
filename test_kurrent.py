@@ -400,8 +400,11 @@ class TestHTML5Writer(WriterTest):
     def test_write_paragraph(self):
         self.check_node(ast.Paragraph(u'foo'), u'<p>foo</p>')
 
+        self.check_node(ast.Paragraph(u'<p>'), u'<p>&lt;p&gt;</p>')
+
     def test_write_header(self):
         self.check_node(ast.Header(u'foo', 1), u'<h1>foo</h1>')
+        self.check_node(ast.Header(u'<p>', 1), u'<h1>&lt;p&gt;</h1>')
 
     def test_write_unordered_list(self):
         list = ast.UnorderedList([

@@ -10,5 +10,6 @@ setup(
     author_email='ich@danielneuhaeuser.de',
     url='https://github.com/DasIch/kurrent',
     packages=['kurrent'],
-    include_package_data=True
+    include_package_data=True,
+    install_requires=['markupsafe>=0.18']
 )

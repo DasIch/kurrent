@@ -9,6 +9,8 @@
 from itertools import count
 from contextlib import contextmanager
 
+import markupsafe
+
 
 class Writer(object):
     def __init__(self, stream):
@@ -116,12 +118,12 @@ class KurrentWriter(Writer):
 class HTML5Writer(Writer):
     def write_Paragraph(self, node):
         self.write(u'<p>')
-        self.write(node.text)
+        self.write(markupsafe.escape(node.text))
         self.write(u'</p>')
 
     def write_Header(self, node):
         self.write(u'<h%d>' % node.level)
-        self.write(node.text)
+        self.write(markupsafe.escape(node.text))
         self.write(u'</h%d>' % node.level)
 
     @contextmanager
