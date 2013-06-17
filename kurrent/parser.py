@@ -71,21 +71,23 @@ class LineIterator(object):
                         break
             except StopIteration:
                 break
-        return lines
+        return self.__class__(lines)
 
     def blockwise(self):
         while True:
             yield self.next_block()
 
     def unindented(self, spaces):
-        for line in self:
-            if line:
-                if len(line) < spaces:
-                    raise BadPath()
-                if line[:spaces].strip():
-                    raise BadPath()
-                line = line[spaces:]
-            yield line
+        def inner():
+            for line in self:
+                if line:
+                    if len(line) < spaces:
+                        raise BadPath()
+                    if line[:spaces].strip():
+                        raise BadPath()
+                    line = line[spaces:]
+                yield line
+        return self.__class__(inner())
 
 
 class ParserFlow(BaseException):
@@ -133,7 +135,7 @@ class Parser(object):
     def parse(self):
         root = ast.Document(self.filename)
         for block in self.lines.blockwise():
-            root.children.append(self.parse_block(block))
+            root.children.append(self.parse_block(list(block)))
         return root
 
     def parse_block(self, lines):
@@ -186,12 +188,11 @@ class Parser(object):
         for line in lineiter:
             if not match(line):
                 raise BadPath()
-            itemlines = [strip(line)]
-            indentation_level = len(line) - len(itemlines[0])
-            for line in lineiter.until(match).unindented(indentation_level):
-                itemlines.append(line)
+            stripped = strip(line)
+            indentation_level = len(line) - len(stripped)
+            lineiter.push(u' ' * indentation_level + stripped)
             item = ast.ListItem()
-            for block in LineIterator(itemlines).blockwise():
-                item.children.append(self.parse_block(block))
+            for block in lineiter.until(match).unindented(indentation_level).blockwise():
+                item.children.append(self.parse_block(list(block)))
             rv.children.append(item)
         return rv

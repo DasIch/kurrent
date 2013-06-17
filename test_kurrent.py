@@ -22,21 +22,21 @@ class TestLineIterator(object):
 
     def test_next_block(self):
         iterator = LineIterator([u'foobar'])
-        assert iterator.next_block() == [u'foobar']
+        assert list(iterator.next_block()) == [u'foobar']
 
         iterator = LineIterator([u'foo', u'bar'])
-        assert iterator.next_block() == [u'foo', u'bar']
+        assert list(iterator.next_block()) == [u'foo', u'bar']
 
         iterator = LineIterator([u'foo', u'', u'bar'])
-        assert iterator.next_block() == [u'foo']
-        assert iterator.next_block() == [u'bar']
+        assert list(iterator.next_block()) == [u'foo']
+        assert list(iterator.next_block()) == [u'bar']
 
         iterator = LineIterator([u'foo', u'', u'', u'bar'])
-        assert iterator.next_block() == [u'foo']
-        assert iterator.next_block() == [u'bar']
+        assert list(iterator.next_block()) == [u'foo']
+        assert list(iterator.next_block()) == [u'bar']
 
         iterator = LineIterator([u'foo', u'', u' bar'])
-        assert iterator.next_block() == [u'foo', u'', u' bar']
+        assert list(iterator.next_block()) == [u'foo', u'', u' bar']
 
     def test_until(self):
         iterator = LineIterator([u'foo', u'bar', u'baz'])
