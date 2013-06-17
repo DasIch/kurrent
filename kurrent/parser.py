@@ -43,13 +43,15 @@ class LineIterator(object):
             self.push(line)
 
     def until(self, condition):
-        while True:
-            line = next(self)
-            if condition(line):
-                self.push(line)
-                break
-            else:
-                yield line
+        def inner():
+            while True:
+                line = next(self)
+                if condition(line):
+                    self.push(line)
+                    break
+                else:
+                    yield line
+        return self.__class__(inner())
 
     def next_block(self):
         lines = []

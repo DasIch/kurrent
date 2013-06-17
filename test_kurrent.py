@@ -38,6 +38,10 @@ class TestLineIterator(object):
         iterator = LineIterator([u'foo', u'', u' bar'])
         assert iterator.next_block() == [u'foo', u'', u' bar']
 
+    def test_until(self):
+        iterator = LineIterator([u'foo', u'bar', u'baz'])
+        assert list(iterator.until(lambda l: l == u'baz')) == [u'foo', u'bar']
+
 
 class TestParagraph(object):
     def test_single_line(self):
