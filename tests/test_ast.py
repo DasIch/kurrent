@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from kurrent.ast import Location, Text, Header
+from kurrent.ast import Location, Paragraph, Text, Header
 
 
 class TestLocation(object):
@@ -30,6 +30,22 @@ class TestLocation(object):
     def test_repr(self):
         location = Location(1, 2)
         assert repr(location) == 'Location(1, 2)'
+
+
+class TestParagraph(object):
+    def test_init(self):
+        paragraph = Paragraph()
+        assert paragraph.children == []
+        assert paragraph.start is None
+        assert paragraph.end is None
+
+        paragraph = Paragraph(children=[
+            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
+            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
+        ])
+        assert len(paragraph.children) == 2
+        assert paragraph.start == Location(1, 1)
+        assert paragraph.end == Location(1, 3)
 
 
 class TestText(object):
