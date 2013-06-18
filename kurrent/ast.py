@@ -29,6 +29,9 @@ class Location(object):
                 return self.column < other.column
         return NotImplemented
 
+    def __le__(self, other):
+        return self < other or self == other
+
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.line, self.column)
 
