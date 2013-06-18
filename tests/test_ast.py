@@ -37,10 +37,10 @@ class TestText(object):
         text = Text(u'foo')
         assert text.text == u'foo'
 
-        text = Text(u'foo', start=1, end=2)
+        text = Text(u'foo', start=Location(1, 1), end=Location(1, 2))
         assert text.text == u'foo'
-        assert text.start == 1
-        assert text.end == 2
+        assert text.start == Location(1, 1)
+        assert text.end == Location(1, 2)
 
 
 class TestHeader(object):
@@ -49,8 +49,8 @@ class TestHeader(object):
         assert header.text == u'foo'
         assert header.level == 1
 
-        header = Header(u'foo', 1, start=2, end=3)
+        header = Header(u'foo', 1, start=Location(1, 1), end=Location(1, 2))
         assert header.text == u'foo'
         assert header.level == 1
-        assert header.start == 2
-        assert header.end == 3
+        assert header.start == Location(1, 1)
+        assert header.end == Location(1, 2)
