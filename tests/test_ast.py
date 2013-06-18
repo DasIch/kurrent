@@ -6,6 +6,8 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import pytest
+
 from kurrent.ast import (
     Location, Document, Paragraph, Text, Header, UnorderedList, OrderedList,
     ListItem
@@ -77,7 +79,21 @@ class TestLocation(object):
         assert repr(location) == 'Location(1, 2)'
 
 
-class TestDocument(object):
+class ParentNodeTest(object):
+    def test_add_child(self, node):
+        assert not node.children
+        child = Text(u'foo')
+        assert child.parent is None
+        node.add_child(child)
+        assert node.children[0] is child
+        assert child.parent is node
+
+
+class TestDocument(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Document('foo')
+
     def test_init(self):
         document = Document('foo')
         assert document.filename == 'foo'
@@ -124,7 +140,11 @@ class TestDocument(object):
         assert document.end == Location(1, 3)
 
 
-class TestParagraph(object):
+class TestParagraph(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Paragraph()
+
     def test_init(self):
         paragraph = Paragraph()
         assert paragraph.children == []
@@ -170,7 +190,11 @@ class TestHeader(object):
         assert header.end == Location(1, 2)
 
 
-class TestUnorderedList(object):
+class TestUnorderedList(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return UnorderedList()
+
     def test_init(self):
         unordered_list = UnorderedList()
         assert unordered_list.children == []
@@ -193,7 +217,11 @@ class TestUnorderedList(object):
         assert unordered_list.end == Location(2, 2)
 
 
-class TestOrderedList(object):
+class TestOrderedList(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return OrderedList()
+
     def test_init(self):
         ordered_list = OrderedList()
         assert ordered_list.children == []
@@ -216,7 +244,11 @@ class TestOrderedList(object):
         assert ordered_list.end == Location(2, 2)
 
 
-class TestListItem(object):
+class TestListItem(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return ListItem()
+
     def test_init(self):
         list_item = ListItem()
         assert list_item.children == []
