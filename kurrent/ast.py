@@ -19,6 +19,16 @@ class Location(object):
     def __hash__(self):
         return hash((self.line, self.column))
 
+    def __lt__(self, other):
+        if isinstance(other, self.__class__):
+            if self.line < other.line:
+                return True
+            elif self.line > other.line:
+                return False
+            else:
+                return self.column < other.column
+        return NotImplemented
+
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.line, self.column)
 
