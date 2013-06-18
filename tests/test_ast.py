@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from kurrent.ast import Location, Header
+from kurrent.ast import Location, Text, Header
 
 
 class TestLocation(object):
@@ -30,6 +30,17 @@ class TestLocation(object):
     def test_repr(self):
         location = Location(1, 2)
         assert repr(location) == 'Location(1, 2)'
+
+
+class TestText(object):
+    def test_init(self):
+        text = Text(u'foo')
+        assert text.text == u'foo'
+
+        text = Text(u'foo', start=1, end=2)
+        assert text.text == u'foo'
+        assert text.start == 1
+        assert text.end == 2
 
 
 class TestHeader(object):
