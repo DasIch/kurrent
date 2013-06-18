@@ -25,6 +25,8 @@ class TestLocation(object):
     def test_ne(self):
         assert Location(1, 1) != Location(1, 2)
         assert Location(1, 1) != Location(2, 1)
+        assert Location(1, 2) != Location(1, 1)
+        assert Location(2, 1) != Location(1, 1)
 
     def test_hash(self):
         assert hash(Location(1, 1)) == hash(Location(1, 1))
