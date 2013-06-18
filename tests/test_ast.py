@@ -99,6 +99,15 @@ class ParentNodeTest(object):
         assert node.children[1] is b
         assert b.parent is node
 
+    def test_replace(self, node):
+        to_be_replaced = Text(u'foo')
+        replacing = Text(u'bar')
+        node.add_child(to_be_replaced)
+        node.replace(to_be_replaced, replacing)
+        assert len(node.children) == 1
+        assert node.children[0] is replacing
+        assert replacing.parent is node
+
 
 class TestDocument(ParentNodeTest):
     @pytest.fixture

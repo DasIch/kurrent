@@ -70,6 +70,11 @@ class ParentNode(ASTNode):
         for node in nodes:
             self.add_child(node)
 
+    def replace(self, old, new):
+        index = self.children.index(old)
+        new.parent = self
+        self.children[index] = new
+
     def traverse(self):
         yield self
         for child in self.children:
