@@ -6,7 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from kurrent.ast import Location, Paragraph, Text, Header
+from kurrent.ast import Location, Document, Paragraph, Text, Header
 
 
 class TestLocation(object):
@@ -72,6 +72,46 @@ class TestLocation(object):
     def test_repr(self):
         location = Location(1, 2)
         assert repr(location) == 'Location(1, 2)'
+
+
+class TestDocument(object):
+    def test_init(self):
+        document = Document('foo')
+        assert document.filename == 'foo'
+        assert document.title is None
+        assert document.children == []
+        assert document.start is None
+        assert document.end is None
+
+        document = Document('foo', title=u'bar')
+        assert document.filename == 'foo'
+        assert document.title == u'bar'
+        assert document.children == []
+        assert document.start is None
+        assert document.end is None
+
+        document = Document('foo', children=[
+            Paragraph(children=[
+                Text(u'foo')
+            ])
+        ])
+        assert document.filename == 'foo'
+        assert len(document.children) == 1
+        assert document.start is None
+        assert document.end is None
+
+        document = Document('foo', children=[
+            Paragraph(children=[
+                Text(u'foo', start=Location(1, 1), end=Location(1, 2))
+            ]),
+            Paragraph(children=[
+                Text(u'bar', start=Location(1, 2), end=Location(1, 3))
+            ])
+        ])
+        assert document.filename == 'foo'
+        assert len(document.children) == 2
+        assert document.start == Location(1, 1)
+        assert document.end == Location(1, 3)
 
 
 class TestParagraph(object):
