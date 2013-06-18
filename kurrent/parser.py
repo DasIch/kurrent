@@ -161,7 +161,7 @@ class Parser(object):
             line = lines[0]
             if line.startswith(u'#'):
                 return self.parse_header(line)
-        if lines[0].startswith(u'*'):
+        if lines[0].startswith(u'-'):
             try:
                 return self.parse_unordered_list(lines)
             except BadPath:
@@ -187,7 +187,7 @@ class Parser(object):
     def parse_unordered_list(self, lines):
         return self._parse_list(
             ast.UnorderedList,
-            lambda l: l.startswith(u'*'),
+            lambda l: l.startswith(u'-'),
             lambda l: l[1:].lstrip(),
             lines
         )

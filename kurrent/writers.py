@@ -102,7 +102,7 @@ class KurrentWriter(Writer):
         next(writer)
         while True:
             try:
-                writer.send(u'* ')
+                writer.send(u'- ')
             except StopIteration:
                 break
 

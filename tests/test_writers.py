@@ -45,16 +45,16 @@ class TestKurrentWriter(WriterTest):
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'foo')])]),
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
-        self.check_node(list, u'* foo\n'
-                              u'* bar\n'
+        self.check_node(list, u'- foo\n'
+                              u'- bar\n'
                               u'\n')
 
         list.add_child(ast.UnorderedList([
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
-        self.check_node(list, u'* foo\n'
-                              u'* bar\n'
-                              u'* * baz\n'
+        self.check_node(list, u'- foo\n'
+                              u'- bar\n'
+                              u'- - baz\n'
                               u'\n')
 
     def test_write_ordered_list(self):

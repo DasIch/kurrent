@@ -159,7 +159,7 @@ def test_header(string, text, level):
 
 class TestUnorderedList(object):
     def test_not_a_list(self):
-        document = Parser.from_string(u'* this paragraph begins with an\n'
+        document = Parser.from_string(u'- this paragraph begins with an\n'
                                       u'asterisk, it\'s not a list\n'
                                       u'though.').parse()
         assert len(document.children) == 1
@@ -168,14 +168,14 @@ class TestUnorderedList(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == (
-            u'* this paragraph begins with '
+            u'- this paragraph begins with '
             u'an asterisk, it\'s not a list '
             u'though.'
         )
 
     def test_simple(self):
-        document = Parser.from_string(u'* foo\n'
-                                      u'* bar').parse()
+        document = Parser.from_string(u'- foo\n'
+                                      u'- bar').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.UnorderedList)
         list = document.children[0]
@@ -191,9 +191,9 @@ class TestUnorderedList(object):
             assert p.children[0].text == text
 
     def test_multiple_line_items(self):
-        document = Parser.from_string(u'* foo\n'
+        document = Parser.from_string(u'- foo\n'
                                       u'  bar\n'
-                                      u'* baz').parse()
+                                      u'- baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.UnorderedList)
         list = document.children[0]
@@ -209,21 +209,21 @@ class TestUnorderedList(object):
             assert p.children[0].text == text
 
     def test_bad_multiple_line_items(self):
-        document = Parser.from_string(u'* foo\n'
+        document = Parser.from_string(u'- foo\n'
                                       u' bar\n'
-                                      u'* baz').parse()
+                                      u'- baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'* foo  bar * baz'
+        assert p.children[0].text == u'- foo  bar - baz'
 
     def test_nested(self):
-        document = Parser.from_string(u'* * foo\n'
-                                      u'  * bar\n'
-                                      u'  * * baz\n'
-                                      u'* baz').parse()
+        document = Parser.from_string(u'- - foo\n'
+                                      u'  - bar\n'
+                                      u'  - - baz\n'
+                                      u'- baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.UnorderedList)
         list = document.children[0]
@@ -269,7 +269,7 @@ class TestUnorderedList(object):
         assert p.children[0].text == u'baz'
 
     def test_multiple_block_items(self):
-        document = Parser.from_string(u'* foo\n'
+        document = Parser.from_string(u'- foo\n'
                                       u'\n'
                                       u'  bar\n').parse()
         assert len(document.children) == 1
