@@ -16,6 +16,9 @@ class Location(object):
     def __eq__(self, other):
         return self.line == other.line and self.column == other.column
 
+    def __hash__(self):
+        return hash((self.line, self.column))
+
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.line, self.column)
 
