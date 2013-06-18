@@ -28,8 +28,8 @@ class TestKurrentWriter(WriterTest):
     def test_write_paragraph(self):
         document = ast.Document('<test>')
         document.children.extend([
-            ast.Paragraph(u'Hello'),
-            ast.Paragraph(u'World')
+            ast.Paragraph(children=[ast.Text(u'Hello')]),
+            ast.Paragraph(children=[ast.Text(u'World')])
         ])
         self.check_node(document, u'Hello\n'
                                   u'\n'
@@ -43,15 +43,15 @@ class TestKurrentWriter(WriterTest):
 
     def test_write_unordered_list(self):
         list = ast.UnorderedList([
-            ast.ListItem([ast.Paragraph(u'foo')]),
-            ast.ListItem([ast.Paragraph(u'bar')])
+            ast.ListItem([ast.Paragraph(children=[ast.Text(u'foo')])]),
+            ast.ListItem([ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
         self.check_node(list, u'* foo\n'
                               u'* bar\n'
                               u'\n')
 
         list.children.append(ast.UnorderedList([
-            ast.ListItem([ast.Paragraph(u'baz')])
+            ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'* foo\n'
                               u'* bar\n'
@@ -60,15 +60,15 @@ class TestKurrentWriter(WriterTest):
 
     def test_write_ordered_list(self):
         list = ast.OrderedList([
-            ast.ListItem([ast.Paragraph(u'foo')]),
-            ast.ListItem([ast.Paragraph(u'bar')])
+            ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'foo')])]),
+            ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
         self.check_node(list, u'1. foo\n'
                               u'2. bar\n'
                               u'\n')
 
         list.children.append(ast.OrderedList([
-            ast.ListItem([ast.Paragraph(u'baz')])
+            ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'1. foo\n'
                               u'2. bar\n'
@@ -80,23 +80,38 @@ class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer
 
     def test_write_paragraph(self):
-        self.check_node(ast.Paragraph(u'foo'), u'<p>foo</p>')
+        self.check_node(
+            ast.Paragraph(children=[ast.Text(u'foo')]),
+            u'<p>foo</p>'
+        )
 
-        self.check_node(ast.Paragraph(u'<p>'), u'<p>&lt;p&gt;</p>')
+        self.check_node(
+            ast.Paragraph(children=[ast.Text(u'<p>')]),
+            u'<p>&lt;p&gt;</p>'
+        )
 
     def test_write_header(self):
-        self.check_node(ast.Header(u'foo', 1), u'<h1>foo</h1>')
-        self.check_node(ast.Header(u'<p>', 1), u'<h1>&lt;p&gt;</h1>')
+        self.check_node(
+            ast.Header(u'foo', 1),
+            u'<h1>foo</h1>'
+        )
+        self.check_node(
+            ast.Header(u'<p>', 1),
+            u'<h1>&lt;p&gt;</h1>'
+        )
 
     def test_write_unordered_list(self):
         list = ast.UnorderedList([
-            ast.ListItem([ast.Paragraph(u'foo')]),
-            ast.ListItem([ast.Paragraph(u'bar')])
+            ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'foo')])]),
+            ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
         self.check_node(list, u'<ul><li><p>foo</p></li><li><p>bar</p></li></ul>')
 
     def test_write_document(self):
-        document = ast.Document('<test>', children=[ast.Paragraph(u'foo')])
+        document = ast.Document(
+            '<test>',
+            children=[ast.Paragraph(children=[ast.Text(u'foo')])]
+        )
         self.check_node(document, u'<!doctype html><title></title><p>foo</p>')
 
         document = ast.Document('<test>', title=u'foo')

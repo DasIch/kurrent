@@ -56,15 +56,19 @@ class Document(ParentNode):
         self.title = title
 
 
+class Paragraph(ParentNode):
+    pass
+
+
 class ChildNode(ASTNode):
     def __init__(self, start=None, end=None):
         self.start = start
         self.end = end
 
 
-class Paragraph(ChildNode):
+class Text(ChildNode):
     def __init__(self, text, start=None, end=None):
-        super(Paragraph, self).__init__(start=start, end=end)
+        super(Text, self).__init__(start=start, end=end)
         self.text = text
 
 

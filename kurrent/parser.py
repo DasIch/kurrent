@@ -174,7 +174,9 @@ class Parser(object):
         return self.parse_paragraph(lines)
 
     def parse_paragraph(self, lines):
-        return ast.Paragraph(u' '.join(lines), lines[0].start, lines[-1].end)
+        return ast.Paragraph(children=[
+            ast.Text(u' '.join(lines), lines[0].start, lines[-1].end)
+        ])
 
     def parse_header(self, line):
         match = _header_re.match(line)

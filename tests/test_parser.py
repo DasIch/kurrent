@@ -106,32 +106,40 @@ class TestParagraph(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
-        assert p.text == u'foobar'
         assert p.start == ast.Location(1, 1)
         assert p.end == ast.Location(1, 7)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foobar'
 
     def test_muliple_lines(self):
         document = Parser.from_string(u'foo\nbar').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
-        assert p.text == u'foo bar'
         assert p.start == ast.Location(1, 1)
         assert p.end == ast.Location(2, 4)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo bar'
 
     def test_multiple_paragraphs(self):
         document = Parser.from_string(u'foo\n\nbar').parse()
         assert len(document.children) == 2
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
-        assert p.text == u'foo'
         assert p.start == ast.Location(1, 1)
         assert p.end == ast.Location(1, 4)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
         assert isinstance(document.children[1], ast.Paragraph)
         p = document.children[1]
-        assert p.text == u'bar'
         assert p.start == ast.Location(3, 1)
         assert p.end == ast.Location(3, 4)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'bar'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [
@@ -156,9 +164,14 @@ class TestUnorderedList(object):
                                       u'though.').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == (u'* this paragraph begins with '
-                                             u'an asterisk, it\'s not a list '
-                                             u'though.')
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == (
+            u'* this paragraph begins with '
+            u'an asterisk, it\'s not a list '
+            u'though.'
+        )
 
     def test_simple(self):
         document = Parser.from_string(u'* foo\n'
@@ -172,7 +185,10 @@ class TestUnorderedList(object):
             item = list.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
     def test_multiple_line_items(self):
         document = Parser.from_string(u'* foo\n'
@@ -187,7 +203,10 @@ class TestUnorderedList(object):
             item = list.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
     def test_bad_multiple_line_items(self):
         document = Parser.from_string(u'* foo\n'
@@ -195,7 +214,10 @@ class TestUnorderedList(object):
                                       u'* baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == u'* foo  bar * baz'
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'* foo  bar * baz'
 
     def test_nested(self):
         document = Parser.from_string(u'* * foo\n'
@@ -218,7 +240,10 @@ class TestUnorderedList(object):
             item = nested.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
         assert isinstance(nested.children[2], ast.ListItem)
         item = nested.children[2]
@@ -229,13 +254,19 @@ class TestUnorderedList(object):
         item = double_nested.children[0]
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
-        assert item.children[0].text == u'baz'
+        p = item.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
 
         assert isinstance(list.children[1], ast.ListItem)
         item = list.children[1]
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
-        assert item.children[0].text == u'baz'
+        p = item.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
 
     def test_multiple_block_items(self):
         document = Parser.from_string(u'* foo\n'
@@ -250,7 +281,10 @@ class TestUnorderedList(object):
         assert len(item.children) == 2
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(item.children[i], ast.Paragraph)
-            assert item.children[i].text == text
+            p = item.children[i]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
 
 class TestOrderedList(object):
@@ -260,9 +294,14 @@ class TestOrderedList(object):
                                       u'though.').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == (u'1. this paragraph begins with '
-                                             u'a number, it\'s not a list '
-                                             u'though.')
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == (
+            u'1. this paragraph begins with '
+            u'a number, it\'s not a list '
+            u'though.'
+        )
 
     def test_simple(self):
         document = Parser.from_string(u'1. foo\n'
@@ -276,7 +315,10 @@ class TestOrderedList(object):
             item = list.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
     def test_multiple_line_items(self):
         document = Parser.from_string(u'1. foo\n'
@@ -291,7 +333,10 @@ class TestOrderedList(object):
             item = list.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
     def test_bad_multiple_line_items(self):
         document = Parser.from_string(u'1. foo\n'
@@ -299,7 +344,10 @@ class TestOrderedList(object):
                                       u'2. baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
-        assert document.children[0].text == u'1. foo   bar 2. baz'
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'1. foo   bar 2. baz'
 
     def test_nested(self):
         document = Parser.from_string(u'1. 1. foo\n'
@@ -322,7 +370,10 @@ class TestOrderedList(object):
             item = nested.children[i]
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
-            assert item.children[0].text == text
+            p = item.children[0]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text
 
         assert isinstance(nested.children[2], ast.ListItem)
         item = nested.children[2]
@@ -333,13 +384,19 @@ class TestOrderedList(object):
         item = double_nested.children[0]
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
-        assert item.children[0].text == u'baz'
+        p = item.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
 
         assert isinstance(list.children[1], ast.ListItem)
         item = list.children[1]
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
-        assert item.children[0].text == u'baz'
+        p = item.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
 
     def test_multiple_block_items(self):
         document = Parser.from_string(u'1. foo\n'
@@ -354,4 +411,7 @@ class TestOrderedList(object):
         assert len(item.children) == 2
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(item.children[i], ast.Paragraph)
-            assert item.children[i].text == text
+            p = item.children[i]
+            assert len(p.children) == 1
+            assert isinstance(p.children[0], ast.Text)
+            assert p.children[0].text == text

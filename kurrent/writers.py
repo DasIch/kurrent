@@ -42,7 +42,11 @@ class Writer(object):
         self.stream.write(u'\n')
 
     def write_node(self, node):
-        method = getattr(self, 'write_' + node.__class__.__name__, None)
+        try:
+            method = getattr(self, 'write_' + node.__class__.__name__)
+        except AttributeError as error:
+            error = error
+            method = None
         if hasattr(node, 'children'):
             if method is None:
                 self.write_children(node)
@@ -53,6 +57,8 @@ class Writer(object):
                         if write_children:
                             self.write_children(node)
         else:
+            if method is None:
+                raise error
             method(node)
 
     def write_children(self, node):
@@ -77,8 +83,9 @@ class KurrentWriter(Writer):
         yield
         self.post_block_newline = old_post_block_newline
 
+    @contextmanager
     def write_Paragraph(self, node):
-        self.write(node.text)
+        yield True
         self.newline()
         self.write_block_newline()
 
@@ -86,6 +93,9 @@ class KurrentWriter(Writer):
         self.write(u'%s %s' % (u'#' * node.level, node.text))
         self.newline()
         self.write_block_newline()
+
+    def write_Text(self, node):
+        self.write(node.text)
 
     def write_UnorderedList(self, node):
         writer = self._write_list(node)
@@ -116,9 +126,13 @@ class KurrentWriter(Writer):
 
 
 class HTML5Writer(Writer):
+    def write_Text(self, node):
+        self.write(markupsafe.escape(node.text))
+
+    @contextmanager
     def write_Paragraph(self, node):
         self.write(u'<p>')
-        self.write(markupsafe.escape(node.text))
+        yield True
         self.write(u'</p>')
 
     def write_Header(self, node):
