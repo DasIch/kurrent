@@ -88,6 +88,17 @@ class ParentNodeTest(object):
         assert node.children[0] is child
         assert child.parent is node
 
+    def test_add_children(self, node):
+        assert not node.children
+        a = Text(u'foo')
+        b = Text(u'bar')
+        node.add_children([a, b])
+        assert len(node.children) == 2
+        assert node.children[0] is a
+        assert a.parent is node
+        assert node.children[1] is b
+        assert b.parent is node
+
 
 class TestDocument(ParentNodeTest):
     @pytest.fixture
