@@ -7,7 +7,8 @@
     :license: BSD, see LICENSE.rst for details
 """
 from kurrent.ast import (
-    Location, Document, Paragraph, Text, Header, OrderedList, ListItem
+    Location, Document, Paragraph, Text, Header, UnorderedList, OrderedList,
+    ListItem
 )
 
 
@@ -154,6 +155,26 @@ class TestHeader(object):
         assert header.level == 1
         assert header.start == Location(1, 1)
         assert header.end == Location(1, 2)
+
+
+class TestUnorderedList(object):
+    def test_init(self):
+        unordered_list = UnorderedList()
+        assert unordered_list.children == []
+        assert unordered_list.start is None
+        assert unordered_list.end is None
+
+        unordered_list = UnorderedList(children=[
+            ListItem(children=[
+                Text(u'foo', start=Location(1, 1), end=Location(1, 2))
+            ]),
+            ListItem(children=[
+                Text(u'bar', start=Location(2, 1), end=Location(2, 2))
+            ])
+        ])
+        assert len(unordered_list.children) == 2
+        assert unordered_list.start == Location(1, 1)
+        assert unordered_list.end == Location(2, 2)
 
 
 class TestOrderedList(object):
