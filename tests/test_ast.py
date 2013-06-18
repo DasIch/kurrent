@@ -6,7 +6,9 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from kurrent.ast import Location, Document, Paragraph, Text, Header, ListItem
+from kurrent.ast import (
+    Location, Document, Paragraph, Text, Header, OrderedList, ListItem
+)
 
 
 class TestLocation(object):
@@ -152,6 +154,26 @@ class TestHeader(object):
         assert header.level == 1
         assert header.start == Location(1, 1)
         assert header.end == Location(1, 2)
+
+
+class TestOrderedList(object):
+    def test_init(self):
+        ordered_list = OrderedList()
+        assert ordered_list.children == []
+        assert ordered_list.start is None
+        assert ordered_list.end is None
+
+        ordered_list = OrderedList(children=[
+            ListItem(children=[
+                Text(u'foo', start=Location(1, 1), end=Location(1, 2))
+            ]),
+            ListItem(children=[
+                Text(u'bar', start=Location(2, 1), end=Location(2, 2))
+            ])
+        ])
+        assert len(ordered_list.children) == 2
+        assert ordered_list.start == Location(1, 1)
+        assert ordered_list.end == Location(2, 2)
 
 
 class TestListItem(object):
