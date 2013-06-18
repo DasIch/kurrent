@@ -47,6 +47,9 @@ class TestLocation(object):
 
     def test_le(self):
         assert Location(1, 1) <= Location(1, 1)
+        assert not (Location(1, 2) <= Location(1, 1))
+        assert not (Location(2, 1) <= Location(1, 1))
+
         assert Location(1, 1) <= Location(1, 2)
         assert Location(1, 1) <= Location(2, 1)
 
