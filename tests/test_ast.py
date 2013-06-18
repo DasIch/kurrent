@@ -79,7 +79,23 @@ class TestLocation(object):
         assert repr(location) == 'Location(1, 2)'
 
 
-class ParentNodeTest(object):
+class ASTNodeTest(object):
+    @pytest.fixture
+    def nodes(self):
+        while True:
+            yield self.node()
+
+    def test_replace_in_parent(self, nodes):
+        document = Document('test')
+        to_be_replaced = next(nodes)
+        replacing = next(nodes)
+        document.add_child(to_be_replaced)
+        to_be_replaced.replace_in_parent(replacing)
+        assert document.children[0] is replacing
+        assert replacing.parent is document
+
+
+class ParentNodeTest(ASTNodeTest):
     def test_add_child(self, node):
         assert not node.children
         child = Text(u'foo')
@@ -184,7 +200,11 @@ class TestParagraph(ParentNodeTest):
         assert paragraph.end == Location(1, 3)
 
 
-class TestText(object):
+class TestText(ASTNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Text(u'foo')
+
     def test_init(self):
         text = Text(u'foo')
         assert text.text == u'foo'
@@ -196,7 +216,11 @@ class TestText(object):
         assert text.end == Location(1, 2)
 
 
-class TestHeader(object):
+class TestHeader(ASTNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Header(u'foo', 1)
+
     def test_init(self):
         header = Header(u'foo', 1)
         assert header.text == u'foo'

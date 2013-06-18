@@ -40,6 +40,9 @@ class ASTNode(object):
     def __init__(self, parent=None):
         self.parent = parent
 
+    def replace_in_parent(self, replacement):
+        self.parent.replace(self, replacement)
+
     def traverse(self):
         yield self
 
