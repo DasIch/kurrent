@@ -83,6 +83,7 @@ class TestDocument(object):
         assert document.filename == 'foo'
         assert document.title is None
         assert document.children == []
+        assert document.parent is None
         assert document.start is None
         assert document.end is None
 
@@ -90,6 +91,7 @@ class TestDocument(object):
         assert document.filename == 'foo'
         assert document.title == u'bar'
         assert document.children == []
+        assert document.parent is None
         assert document.start is None
         assert document.end is None
 
@@ -100,6 +102,8 @@ class TestDocument(object):
         ])
         assert document.filename == 'foo'
         assert len(document.children) == 1
+        assert document.children[0].parent is document
+        assert document.parent is None
         assert document.start is None
         assert document.end is None
 
@@ -113,6 +117,9 @@ class TestDocument(object):
         ])
         assert document.filename == 'foo'
         assert len(document.children) == 2
+        for child in document.children:
+            assert child.parent is document
+        assert document.parent is None
         assert document.start == Location(1, 1)
         assert document.end == Location(1, 3)
 
@@ -121,6 +128,7 @@ class TestParagraph(object):
     def test_init(self):
         paragraph = Paragraph()
         assert paragraph.children == []
+        assert paragraph.parent is None
         assert paragraph.start is None
         assert paragraph.end is None
 
@@ -129,6 +137,9 @@ class TestParagraph(object):
             Text(u'bar', start=Location(1, 2), end=Location(1, 3))
         ])
         assert len(paragraph.children) == 2
+        for child in paragraph.children:
+            assert child.parent is paragraph
+        assert paragraph.parent is None
         assert paragraph.start == Location(1, 1)
         assert paragraph.end == Location(1, 3)
 
@@ -140,6 +151,7 @@ class TestText(object):
 
         text = Text(u'foo', start=Location(1, 1), end=Location(1, 2))
         assert text.text == u'foo'
+        assert text.parent is None
         assert text.start == Location(1, 1)
         assert text.end == Location(1, 2)
 
@@ -153,6 +165,7 @@ class TestHeader(object):
         header = Header(u'foo', 1, start=Location(1, 1), end=Location(1, 2))
         assert header.text == u'foo'
         assert header.level == 1
+        assert header.parent is None
         assert header.start == Location(1, 1)
         assert header.end == Location(1, 2)
 
@@ -161,6 +174,7 @@ class TestUnorderedList(object):
     def test_init(self):
         unordered_list = UnorderedList()
         assert unordered_list.children == []
+        assert unordered_list.parent is None
         assert unordered_list.start is None
         assert unordered_list.end is None
 
@@ -173,6 +187,8 @@ class TestUnorderedList(object):
             ])
         ])
         assert len(unordered_list.children) == 2
+        for child in unordered_list.children:
+            assert child.parent is unordered_list
         assert unordered_list.start == Location(1, 1)
         assert unordered_list.end == Location(2, 2)
 
@@ -181,6 +197,7 @@ class TestOrderedList(object):
     def test_init(self):
         ordered_list = OrderedList()
         assert ordered_list.children == []
+        assert ordered_list.parent is None
         assert ordered_list.start is None
         assert ordered_list.end is None
 
@@ -193,6 +210,8 @@ class TestOrderedList(object):
             ])
         ])
         assert len(ordered_list.children) == 2
+        for child in ordered_list.children:
+            assert child.parent is ordered_list
         assert ordered_list.start == Location(1, 1)
         assert ordered_list.end == Location(2, 2)
 
@@ -207,5 +226,7 @@ class TestListItem(object):
             Text(u'bar', start=Location(1, 2), end=Location(1, 3))
         ])
         assert len(list_item.children) == 2
+        for child in list_item.children:
+            assert child.parent is list_item
         assert list_item.start == Location(1, 1)
         assert list_item.end == Location(1, 3)

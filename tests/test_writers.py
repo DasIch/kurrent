@@ -26,8 +26,7 @@ class TestKurrentWriter(WriterTest):
     writer_cls = KurrentWriter
 
     def test_write_paragraph(self):
-        document = ast.Document('<test>')
-        document.children.extend([
+        document = ast.Document('<test>', children=[
             ast.Paragraph(children=[ast.Text(u'Hello')]),
             ast.Paragraph(children=[ast.Text(u'World')])
         ])
@@ -50,7 +49,7 @@ class TestKurrentWriter(WriterTest):
                               u'* bar\n'
                               u'\n')
 
-        list.children.append(ast.UnorderedList([
+        list.add_child(ast.UnorderedList([
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'* foo\n'
@@ -67,7 +66,7 @@ class TestKurrentWriter(WriterTest):
                               u'2. bar\n'
                               u'\n')
 
-        list.children.append(ast.OrderedList([
+        list.add_child(ast.OrderedList([
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'1. foo\n'

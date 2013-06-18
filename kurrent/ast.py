@@ -37,16 +37,20 @@ class Location(object):
 
 
 class ASTNode(object):
+    def __init__(self, parent=None):
+        self.parent = parent
+
     def traverse(self):
         yield self
 
 
 class ParentNode(ASTNode):
-    def __init__(self, children=None):
-        super(ParentNode, self).__init__()
-        if children is None:
-            children = []
-        self.children = children
+    def __init__(self, children=None, parent=None):
+        super(ParentNode, self).__init__(parent=parent)
+        self.children = []
+
+        if children is not None:
+            self.add_children(children)
 
     @property
     def start(self):
@@ -57,6 +61,14 @@ class ParentNode(ASTNode):
     def end(self):
         if self.children:
             return self.children[-1].end
+
+    def add_child(self, node):
+        node.parent = self
+        self.children.append(node)
+
+    def add_children(self, nodes):
+        for node in nodes:
+            self.add_child(node)
 
     def traverse(self):
         yield self
@@ -77,7 +89,8 @@ class Paragraph(ParentNode):
 
 
 class ChildNode(ASTNode):
-    def __init__(self, start=None, end=None):
+    def __init__(self, start=None, end=None, parent=None):
+        super(ChildNode, self).__init__(parent=parent)
         self.start = start
         self.end = end
 

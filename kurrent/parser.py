@@ -211,7 +211,7 @@ class Parser(object):
             stripped = strip(line)
             indentation_level = len(line) - len(stripped)
             lineiter.push(u' ' * indentation_level + stripped)
-            rv.children.append(
+            rv.add_child(
                 ast.ListItem([
                     self.parse_block(list(block))
                     for block in
