@@ -9,8 +9,8 @@
 import pytest
 
 from kurrent.ast import (
-    Location, Document, Paragraph, Text, Header, UnorderedList, OrderedList,
-    ListItem
+    Location, Document, Paragraph, Emphasis, Strong, Text, Header,
+    UnorderedList, OrderedList, ListItem
 )
 
 
@@ -198,6 +198,54 @@ class TestParagraph(ParentNodeTest):
         assert paragraph.parent is None
         assert paragraph.start == Location(1, 1)
         assert paragraph.end == Location(1, 3)
+
+
+class TestEmphasis(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Emphasis()
+
+    def test_init(self):
+        emphasis = Emphasis()
+        assert emphasis.children == []
+        assert emphasis.parent is None
+        assert emphasis.start is None
+        assert emphasis.end is None
+
+        emphasis = Emphasis(children=[
+            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
+            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
+        ])
+        assert len(emphasis.children) == 2
+        for child in emphasis.children:
+            assert child.parent is emphasis
+        assert emphasis.parent is None
+        assert emphasis.start == Location(1, 1)
+        assert emphasis.end == Location(1, 3)
+
+
+class TestStrong(ParentNodeTest):
+    @pytest.fixture
+    def node(self):
+        return Strong()
+
+    def test_init(self):
+        strong = Strong()
+        assert strong.children == []
+        assert strong.parent is None
+        assert strong.start is None
+        assert strong.end is None
+
+        strong = Strong(children=[
+            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
+            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
+        ])
+        assert len(strong.children) == 2
+        for child in strong.children:
+            assert child.parent is strong
+        assert strong.parent is None
+        assert strong.start == Location(1, 1)
+        assert strong.end == Location(1, 3)
 
 
 class TestText(ASTNodeTest):

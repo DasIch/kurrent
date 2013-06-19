@@ -74,6 +74,14 @@ class TestKurrentWriter(WriterTest):
                               u'3. 1. baz\n'
                               u'\n')
 
+    def test_emphasis(self):
+        emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
+        self.check_node(emphasis, u'*foo*')
+
+    def test_strong(self):
+        strong = ast.Strong(children=[ast.Text(u'foo')])
+        self.check_node(strong, u'**foo**')
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer
@@ -115,3 +123,11 @@ class TestHTML5Writer(WriterTest):
 
         document = ast.Document('<test>', title=u'foo')
         self.check_node(document, u'<!doctype html><title>foo</title>')
+
+    def test_write_emphasis(self):
+        emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
+        self.check_node(emphasis, u'<em>foo</em>')
+
+    def test_write_strong(self):
+        strong = ast.Strong(children=[ast.Text(u'foo')])
+        self.check_node(strong, u'<strong>foo</strong>')

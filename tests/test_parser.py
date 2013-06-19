@@ -142,6 +142,38 @@ class TestParagraph(object):
         assert p.children[0].text == u'bar'
 
 
+class TestInline(object):
+    def test_emphasis(self):
+        document = Parser.from_string(u'*foo*').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Emphasis)
+        e = p.children[0]
+        assert len(e.children) == 1
+        assert e.start == ast.Location(1, 1)
+        assert e.end == ast.Location(1, 6)
+        assert isinstance(e.children[0], ast.Text)
+        assert e.children[0].text == u'foo'
+
+    def test_strong(self):
+        document = Parser.from_string(u'**foo**').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Strong)
+        s = p.children[0]
+        assert len(s.children) == 1
+        assert s.start == ast.Location(1, 1)
+        assert s.end == ast.Location(1, 8)
+        assert isinstance(s.children[0], ast.Text)
+        assert s.children[0].text == u'foo'
+        assert s.children[0].start == ast.Location(1, 3)
+        assert s.children[0].end == ast.Location(1, 6)
+
+
 @pytest.mark.parametrize(('string', 'text', 'level'), [
     (u'# Hello', u'Hello', 1),
     (u'## Hello', u'Hello', 2)

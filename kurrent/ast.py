@@ -57,13 +57,25 @@ class ParentNode(ASTNode):
 
     @property
     def start(self):
+        if hasattr(self, '_start'):
+            return self._start
         if self.children:
             return self.children[0].start
 
+    @start.setter
+    def start(self, new_start):
+        self._start = new_start
+
     @property
     def end(self):
+        if hasattr(self, '_end'):
+            return self._end
         if self.children:
             return self.children[-1].end
+
+    @end.setter
+    def end(self, new_end):
+        self._end = new_end
 
     def add_child(self, node):
         node.parent = self
@@ -93,6 +105,14 @@ class Document(ParentNode):
 
 
 class Paragraph(ParentNode):
+    pass
+
+
+class Emphasis(ParentNode):
+    pass
+
+
+class Strong(ParentNode):
     pass
 
 

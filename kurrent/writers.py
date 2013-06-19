@@ -124,6 +124,18 @@ class KurrentWriter(Writer):
                     self.write_node(child)
         self.write_block_newline()
 
+    @contextmanager
+    def write_Emphasis(self, node):
+        self.write(u'*')
+        yield True
+        self.write(u'*')
+
+    @contextmanager
+    def write_Strong(self, node):
+        self.write(u'**')
+        yield True
+        self.write(u'**')
+
 
 class HTML5Writer(Writer):
     def write_Text(self, node):
@@ -159,3 +171,15 @@ class HTML5Writer(Writer):
             u'' if node.title is None else node.title
         ))
         yield True
+
+    @contextmanager
+    def write_Emphasis(self, node):
+        self.write(u'<em>')
+        yield True
+        self.write(u'</em>')
+
+    @contextmanager
+    def write_Strong(self, node):
+        self.write(u'<strong>')
+        yield True
+        self.write(u'</strong>')
