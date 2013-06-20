@@ -212,6 +212,33 @@ class InlineMarkupTest(object):
         assert p.children[2].start == ast.Location(1, len(code) + 1 - len(u'baz'))
         assert p.children[2].end == ast.Location(1, len(code) + 1)
 
+    def test_surrounding_text(self, node_cls, markup_string):
+        code = (markup_string % u'foo') + u'bar' + (markup_string % u'baz')
+        document = Parser.from_string(code).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 3
+        assert isinstance(p.children[0], node_cls)
+        m = p.children[0]
+        assert len(m.children) == 1
+        assert isinstance(m.children[0], ast.Text)
+        assert m.children[0].text == u'foo'
+        assert m.start == ast.Location(1, 1)
+        assert m.end == ast.Location(1, len(markup_string % u'foo') + 1)
+        assert isinstance(p.children[1], ast.Text)
+        t = p.children[1]
+        assert t.text == u'bar'
+        assert t.start == ast.Location(1, len(markup_string % u'foo') + 1)
+        assert t.end == ast.Location(1, len(markup_string % u'foo') + len(u'bar') + 1)
+        assert isinstance(p.children[2], node_cls)
+        m = p.children[2]
+        assert len(m.children) == 1
+        assert isinstance(m.children[0], ast.Text)
+        assert m.children[0].text == u'baz'
+        assert m.start == ast.Location(1, len(markup_string % u'foo') + len(u'bar') + 1)
+        assert m.end == ast.Location(1, len(code) + 1)
+
 
 class TestEmphasis(InlineMarkupTest):
     @pytest.fixture
