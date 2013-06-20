@@ -189,6 +189,29 @@ class InlineMarkupTest(object):
         assert e.end == ast.Location(1, len(code) + 1)
         assert e.children[0].text == u'bar'
 
+    def test_surrounded_by_text(self, node_cls, markup_string):
+        code = u'foo' + (markup_string % u'bar') + u'baz'
+        document = Parser.from_string(code).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 3
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
+        assert p.children[0].start == ast.Location(1, 1)
+        assert p.children[0].end == ast.Location(1, len(u'foo') + 1)
+        assert isinstance(p.children[1], node_cls)
+        m = p.children[1]
+        assert len(m.children) == 1
+        assert m.start == ast.Location(1, len(u'foo') + 1)
+        assert m.end == ast.Location(1, len(code) + 1 - len(u'baz'))
+        assert isinstance(m.children[0], ast.Text)
+        assert m.children[0].text == u'bar'
+        assert isinstance(p.children[2], ast.Text)
+        assert p.children[2].text == u'baz'
+        assert p.children[2].start == ast.Location(1, len(code) + 1 - len(u'baz'))
+        assert p.children[2].end == ast.Location(1, len(code) + 1)
+
 
 class TestEmphasis(InlineMarkupTest):
     @pytest.fixture
