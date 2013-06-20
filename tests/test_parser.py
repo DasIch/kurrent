@@ -142,8 +142,8 @@ class TestParagraph(object):
         assert p.children[0].text == u'bar'
 
 
-class TestInline(object):
-    def test_emphasis(self):
+class TestEmphasis(object):
+    def test_only(self):
         document = Parser.from_string(u'*foo*').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -157,7 +157,23 @@ class TestInline(object):
         assert isinstance(e.children[0], ast.Text)
         assert e.children[0].text == u'foo'
 
-    def test_strong(self):
+    def test_followed_by_text(self):
+        document = Parser.from_string(u'*foo*bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Emphasis)
+        e = p.children[0]
+        assert e.start == ast.Location(1, 1)
+        assert e.end == ast.Location(1, 6)
+        assert len(e.children) == 1
+        assert isinstance(e.children[0], ast.Text)
+        assert e.children[0].text == u'foo'
+
+
+class TestStrong(object):
+    def test_only(self):
         document = Parser.from_string(u'**foo**').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -172,6 +188,13 @@ class TestInline(object):
         assert s.children[0].text == u'foo'
         assert s.children[0].start == ast.Location(1, 3)
         assert s.children[0].end == ast.Location(1, 6)
+
+    def test_followed_by_text(self):
+        document = Parser.from_string(u'**foo**bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [

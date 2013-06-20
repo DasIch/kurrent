@@ -219,10 +219,8 @@ class Parser(object):
         rv = []
         current_node = None
         for line in lines:
-            print(line.start, line.end, repr(line))
             for content, node_cls, is_start in self._parse_single_inline(line):
                 if current_node is None:
-                    print('necessity push')
                     if node_cls is None:
                         current_node = ast.Text(content, content.start, content.end)
                     else:
@@ -232,36 +230,29 @@ class Parser(object):
                 else:
                     if node_cls is None:
                         if isinstance(current_node, ast.Text):
-                            print('concat text')
                             current_node.text += content
                             current_node.end = content.end
                         else:
-                            print('add text')
                             current_node.add_child(
                                 ast.Text(content, content.start, content.end)
                             )
                     else:
                         if is_start:
-                            print('push node')
                             current_node.add_child(node_cls())
                             current_node = current_node.children[-1]
                             current_node.start = content.start
-                        elif current_node.parent:
-                            print('pop node')
+                        else:
                             current_node.end = content.end
                             current_node = current_node.parent
-            if current_node:
-                print('add line space')
-                if isinstance(current_node, ast.Text):
-                    current_node.text += u' '
-                else:
-                    current_node.children[-1].text += u' '
-        if isinstance(current_node, ast.Text):
-            current_node.text = current_node.text[:-1]
+            if isinstance(rv[-1], ast.Text):
+                rv[-1].text += u' '
+            else:
+                rv[-1].children[-1].text += u' '
+        if isinstance(rv[-1], ast.Text):
+            rv[-1].text = rv[-1].text[:-1]
         else:
-            current_node.children[-1].text = current_node.children[-1].text[:-1]
-            print(repr(content), content.end)
-            current_node.end = content.end
+            rv[-1].children[-1].text = rv[-1].children[-1].text[:-1]
+            rv[-1].end = content.end
         return rv
 
     def parse_header(self, line):
