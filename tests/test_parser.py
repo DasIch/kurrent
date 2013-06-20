@@ -142,89 +142,72 @@ class TestParagraph(object):
         assert p.children[0].text == u'bar'
 
 
-class TestEmphasis(object):
-    def test_only(self):
-        document = Parser.from_string(u'*foo*').parse()
+class InlineMarkupTest(object):
+    def test_only(self, node_cls, markup_string):
+        code = markup_string % u'foo'
+        document = Parser.from_string(code).parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Emphasis)
-        e = p.children[0]
-        assert len(e.children) == 1
-        assert e.start == ast.Location(1, 1)
-        assert e.end == ast.Location(1, 6)
-        assert isinstance(e.children[0], ast.Text)
-        assert e.children[0].text == u'foo'
+        assert isinstance(p.children[0], node_cls)
+        m = p.children[0]
+        assert len(m.children) == 1
+        assert m.start == ast.Location(1, 1)
+        assert m.end == ast.Location(1, len(code) + 1)
+        assert isinstance(m.children[0], ast.Text)
+        assert m.children[0].text == u'foo'
 
-    def test_followed_by_text(self):
-        document = Parser.from_string(u'*foo*bar').parse()
+    def test_followed_by_text(self, node_cls, markup_string):
+        code = (markup_string % u'foo') + u'bar'
+        document = Parser.from_string(code).parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Emphasis)
+        assert isinstance(p.children[0], node_cls)
         e = p.children[0]
         assert e.start == ast.Location(1, 1)
-        assert e.end == ast.Location(1, 6)
+        assert e.end == ast.Location(1, len(code) + 1 - len(u'bar'))
         assert len(e.children) == 1
         assert isinstance(e.children[0], ast.Text)
         assert e.children[0].text == u'foo'
 
-    def test_preceded_by_text(self):
-        document = Parser.from_string(u'foo*bar*').parse()
+    def test_preceded_by_text(self, node_cls, markup_string):
+        code = u'foo' + (markup_string % u'bar')
+        document = Parser.from_string(code).parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'foo'
-        assert isinstance(p.children[1], ast.Emphasis)
+        assert isinstance(p.children[1], node_cls)
         e = p.children[1]
         assert len(e.children) == 1
         assert e.start == ast.Location(1, 4)
-        assert e.end == ast.Location(1, 9)
+        assert e.end == ast.Location(1, len(code) + 1)
         assert e.children[0].text == u'bar'
 
 
-class TestStrong(object):
-    def test_only(self):
-        document = Parser.from_string(u'**foo**').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
-        assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Strong)
-        s = p.children[0]
-        assert len(s.children) == 1
-        assert s.start == ast.Location(1, 1)
-        assert s.end == ast.Location(1, 8)
-        assert isinstance(s.children[0], ast.Text)
-        assert s.children[0].text == u'foo'
-        assert s.children[0].start == ast.Location(1, 3)
-        assert s.children[0].end == ast.Location(1, 6)
+class TestEmphasis(InlineMarkupTest):
+    @pytest.fixture
+    def node_cls(self):
+        return ast.Emphasis
 
-    def test_followed_by_text(self):
-        document = Parser.from_string(u'**foo**bar').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
-        assert len(p.children) == 2
+    @pytest.fixture
+    def markup_string(self):
+        return u'*%s*'
 
-    def test_preceded_by_text(self):
-        document = Parser.from_string(u'foo**bar**').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
-        assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'foo'
-        assert isinstance(p.children[1], ast.Strong)
-        s = p.children[1]
-        assert len(s.children) == 1
-        assert s.start == ast.Location(1, 4)
-        assert s.end == ast.Location(1, 11)
-        assert s.children[0].text == u'bar'
+
+class TestStrong(InlineMarkupTest):
+    @pytest.fixture
+    def node_cls(self):
+        return ast.Strong
+
+    @pytest.fixture
+    def markup_string(self):
+        return u'**%s**'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [
