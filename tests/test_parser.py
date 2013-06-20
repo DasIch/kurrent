@@ -171,6 +171,21 @@ class TestEmphasis(object):
         assert isinstance(e.children[0], ast.Text)
         assert e.children[0].text == u'foo'
 
+    def test_preceded_by_text(self):
+        document = Parser.from_string(u'foo*bar*').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
+        assert isinstance(p.children[1], ast.Emphasis)
+        e = p.children[1]
+        assert len(e.children) == 1
+        assert e.start == ast.Location(1, 4)
+        assert e.end == ast.Location(1, 9)
+        assert e.children[0].text == u'bar'
+
 
 class TestStrong(object):
     def test_only(self):
@@ -195,6 +210,21 @@ class TestStrong(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
+
+    def test_preceded_by_text(self):
+        document = Parser.from_string(u'foo**bar**').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
+        assert isinstance(p.children[1], ast.Strong)
+        s = p.children[1]
+        assert len(s.children) == 1
+        assert s.start == ast.Location(1, 4)
+        assert s.end == ast.Location(1, 11)
+        assert s.children[0].text == u'bar'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [

@@ -238,8 +238,12 @@ class Parser(object):
                             )
                     else:
                         if is_start:
-                            current_node.add_child(node_cls())
-                            current_node = current_node.children[-1]
+                            if isinstance(current_node, ast.Text):
+                                rv.append(node_cls())
+                                current_node = rv[-1]
+                            else:
+                                current_node.add_child(node_cls())
+                                current_node = current_node.children[-1]
                             current_node.start = content.start
                         else:
                             current_node.end = content.end
