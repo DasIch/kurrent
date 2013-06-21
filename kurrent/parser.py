@@ -90,7 +90,14 @@ class LineIterator(object):
         if self.remaining:
             line = self.remaining.pop()
         else:
-            line = next(self.lines)
+            try:
+                line = next(self.lines)
+            except UnicodeDecodeError:
+                raise DocumentError(
+                    u'Could not decode characters in line %d, using %s.' % (
+                        self.lineno, u'utf-8'
+                    )
+                )
         self.lineno += 1
         return Line(line.rstrip(u'\r\n'), self.lineno, self.columnno)
 
@@ -151,6 +158,10 @@ class LineIterator(object):
 
 
 class BadPath(BaseException):
+    pass
+
+
+class DocumentError(Exception):
     pass
 
 

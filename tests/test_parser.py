@@ -9,7 +9,14 @@
 import pytest
 
 from kurrent import ast
-from kurrent.parser import LineIterator, Parser, BadPath
+from kurrent.parser import LineIterator, Parser, BadPath, DocumentError
+
+
+class TestParser(object):
+    def test_from_bytes(self):
+        parser = Parser.from_bytes(u'äöü'.encode('latin-1'))
+        with pytest.raises(DocumentError):
+            parser.parse()
 
 
 class TestLineIterator(object):
