@@ -48,7 +48,14 @@ def _make_tokenizer(marks):
                     mark = marks[match.lastindex - 1]
                 else:
                     mark = None
-                yield Line(match.group(match.lastindex), line.lineno, match.start() + 1), mark
+                yield (
+                    Line(
+                        match.group(match.lastindex),
+                        line.lineno,
+                        match.start() + 1
+                    ),
+                    mark
+                )
     return tokenizer
 
 
