@@ -32,7 +32,7 @@ def _make_tokenizer(marks):
         marks=u''.join(set(marks)),
         escape=escape_character
     ))
-    parts.append(u'([^{0}\\\\][^{0}]+[^{0}\\\\])'.format(u''.join(set(marks))))
+    parts.append(u'([^{0}]+[^{0}\\\\])'.format(u''.join(set(marks))))
     regex = re.compile(u'|'.join(parts))
     def tokenizer(lines):
         first = True
