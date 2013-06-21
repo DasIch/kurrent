@@ -19,38 +19,35 @@ _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
-def unzip(zipped):
-    return map(list, zip(*zipped))
-
-
-def _make_inline_parser(rules, escape_character=u'\\'):
-    marks, nodes = unzip(rules)
-    nodes.append(None)
-    escaped_marks = list(map(re.escape, marks))
-    flags = [False] * len(nodes)
-    escape_character = re.escape(escape_character)
+def _make_tokenizer(marks):
     parts = []
-    for mark in escaped_marks:
+    escape_character = re.escape(u'\\')
+    for mark in marks:
         parts.append(u'((?<!{escape}){mark})'.format(
             escape=escape_character,
-            mark=mark
+            mark=re.escape(mark)
         ))
-    parts.append(u'((?:[^{all_marks}]|(?<={escape}){all_marks})+)'.format(
-        all_marks=u''.join(escaped_marks),
+    parts.append(u'((?:[^{marks}]|(?<={escape})[{marks}])+)'.format(
+        marks=u''.join(re.escape(mark) for mark in mark),
         escape=escape_character
     ))
     regex = re.compile(u'|'.join(parts))
-    def parser(line):
-        for match in regex.finditer(line):
-            node_cls = nodes[match.lastindex - 1]
-            start, end = match.span()
-            part = line[start:end]
-            flags[match.lastindex - 1] = not flags[match.lastindex - 1]
-            flag = flags[match.lastindex - 1]
-            column_start = start
-            column_start += 1
-            yield Line(part, line.lineno, column_start), node_cls, flag
-    return parser
+    def tokenizer(lines):
+        first = True
+        end = -1
+        for line in lines:
+            if first:
+                first = False
+            else:
+                yield Line(u' ', line.lineno - 1 , end), None
+            for match in regex.finditer(line):
+                end = match.end()
+                if match.lastindex <= len(marks):
+                    mark = marks[match.lastindex - 1]
+                else:
+                    mark = None
+                yield Line(match.group(), line.lineno, match.start() + 1), mark
+    return tokenizer
 
 
 class Line(text_type):
@@ -210,53 +207,50 @@ class Parser(object):
     def parse_paragraph(self, lines):
         return ast.Paragraph(children=self.parse_inline(lines))
 
-    _parse_single_inline = staticmethod(_make_inline_parser([
-        (u'**', ast.Strong),
-        (u'*', ast.Emphasis)
-    ]))
+    _inline_tokenizer = staticmethod(_make_tokenizer([u'**', u'*']))
 
     def parse_inline(self, lines):
         rv = []
-        current_node = None
-        for line in lines:
-            for content, node_cls, is_start in self._parse_single_inline(line):
-                if current_node is None:
-                    if node_cls is None:
-                        current_node = ast.Text(content, content.start, content.end)
-                    else:
-                        current_node = node_cls()
-                        current_node.start = content.start
-                    rv.append(current_node)
+        tokens = self._inline_tokenizer(lines)
+        for lexeme, mark in tokens:
+            if mark is None:
+                if rv and isinstance(rv[-1], ast.Text):
+                    rv[-1].text += lexeme
+                    rv[-1].end = lexeme.end
                 else:
-                    if node_cls is None:
-                        if isinstance(current_node, ast.Text):
-                            current_node.text += content
-                            current_node.end = content.end
-                        else:
-                            current_node.add_child(
-                                ast.Text(content, content.start, content.end)
-                            )
-                    else:
-                        if is_start:
-                            if isinstance(current_node, ast.Text):
-                                rv.append(node_cls())
-                                current_node = rv[-1]
-                            else:
-                                current_node.add_child(node_cls())
-                                current_node = current_node.children[-1]
-                            current_node.start = content.start
-                        else:
-                            current_node.end = content.end
-                            current_node = current_node.parent
-            if isinstance(rv[-1], ast.Text):
-                rv[-1].text += u' '
+                    rv.append(ast.Text(lexeme, lexeme.start, lexeme.end))
+            elif mark == u'**':
+                rv.append(self.parse_strong(tokens, lexeme.start))
+            elif mark == u'*':
+                rv.append(self.parse_emphasis(tokens, lexeme.start))
             else:
-                rv[-1].children[-1].text += u' '
-        if isinstance(rv[-1], ast.Text):
-            rv[-1].text = rv[-1].text[:-1]
-        else:
-            rv[-1].children[-1].text = rv[-1].children[-1].text[:-1]
-            rv[-1].end = content.end
+                raise NotImplementedError(lexeme, mark)
+        return rv
+
+    def parse_strong(self, tokens, start):
+        rv = ast.Strong()
+        rv.start = start
+        for lexeme, mark in tokens:
+            if mark == u'**':
+                rv.end = lexeme.end
+                break
+            elif mark is None:
+                rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
+            else:
+                raise NotImplementedError(lexeme, mark)
+        return rv
+
+    def parse_emphasis(self, tokens, start):
+        rv = ast.Emphasis()
+        rv.start = start
+        for lexeme, mark in tokens:
+            if mark == u'*':
+                rv.end = lexeme.end
+                break
+            elif mark is None:
+                rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
+            else:
+                raise NotImplementedError(lexeme, mark)
         return rv
 
     def parse_header(self, line):
