@@ -158,6 +158,18 @@ class InlineMarkupTest(object):
         assert isinstance(m.children[0], ast.Text)
         assert m.children[0].text == u'foo'
 
+    def test_multiple_lines(self, node_cls, markup_string):
+        code = markup_string % u'foo\nbar'
+        document = Parser.from_string(code).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], node_cls)
+        m = p.children[0]
+        assert len(m.children) == 1
+        assert isinstance(m.children[0], ast.Text)
+
     def test_followed_by_text(self, node_cls, markup_string):
         code = (markup_string % u'foo') + u'bar'
         document = Parser.from_string(code).parse()

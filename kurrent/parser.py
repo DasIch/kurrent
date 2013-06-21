@@ -235,7 +235,11 @@ class Parser(object):
                 rv.end = lexeme.end
                 break
             elif mark is None:
-                rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
+                if rv.children and isinstance(rv.children[-1], ast.Text):
+                    rv.children[-1].text += lexeme
+                    rv.children[-1].end = lexeme.end
+                else:
+                    rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
             else:
                 raise NotImplementedError(lexeme, mark)
         return rv
@@ -248,7 +252,11 @@ class Parser(object):
                 rv.end = lexeme.end
                 break
             elif mark is None:
-                rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
+                if rv.children and isinstance(rv.children[-1], ast.Text):
+                    rv.children[-1].text += lexeme
+                    rv.children[-1].end = lexeme.end
+                else:
+                    rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
             else:
                 raise NotImplementedError(lexeme, mark)
         return rv
