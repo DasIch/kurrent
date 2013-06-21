@@ -22,15 +22,17 @@ _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 def _make_tokenizer(marks):
     parts = []
     escape_character = re.escape(u'\\')
-    for mark in marks:
+    escaped_marks = list(map(re.escape, marks))
+    for mark in escaped_marks:
         parts.append(u'((?<!{escape}){mark})'.format(
             escape=escape_character,
-            mark=re.escape(mark)
+            mark=mark
         ))
-    parts.append(u'((?:[^{marks}]|(?<={escape})[{marks}])+)'.format(
-        marks=u''.join(re.escape(mark) for mark in mark),
+    parts.append(u'{escape}([{marks}])'.format(
+        marks=u''.join(set(marks)),
         escape=escape_character
     ))
+    parts.append(u'([^{0}\\\\][^{0}]+[^{0}\\\\])'.format(u''.join(set(marks))))
     regex = re.compile(u'|'.join(parts))
     def tokenizer(lines):
         first = True
@@ -46,7 +48,7 @@ def _make_tokenizer(marks):
                     mark = marks[match.lastindex - 1]
                 else:
                     mark = None
-                yield Line(match.group(), line.lineno, match.start() + 1), mark
+                yield Line(match.group(match.lastindex), line.lineno, match.start() + 1), mark
     return tokenizer
 
 

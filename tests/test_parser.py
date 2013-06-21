@@ -261,6 +261,15 @@ class TestEmphasis(InlineMarkupTest):
     def markup_string(self):
         return u'*%s*'
 
+    def test_escaping(self):
+        document = Parser.from_string(u'\*foo\*').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'*foo*'
+
 
 class TestStrong(InlineMarkupTest):
     @pytest.fixture
@@ -270,6 +279,15 @@ class TestStrong(InlineMarkupTest):
     @pytest.fixture
     def markup_string(self):
         return u'**%s**'
+
+    def test_escaping(self):
+        document = Parser.from_string(u'\*\*foo\*\*').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'**foo**'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [
