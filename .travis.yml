@@ -6,6 +6,13 @@ python:
   - "pypy"
   - "3.3"
 
-install: pip install --editable .
+env:
+  - REQUIREMENTS=lowest
+  - REQUIREMENTS=release
+  - REQUIREMENTS=devel
+
+install:
+  - pip install -r .travis-$REQUIREMENTS-requirements.txt
+  - pip install --editable .
 
 script: py.test
