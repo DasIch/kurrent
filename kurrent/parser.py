@@ -11,7 +11,8 @@ import re
 import codecs
 
 from . import ast
-from ._compat import implements_iterator, text_type
+from .utils import PushableIterator
+from ._compat import implements_iterator, text_type, PY2
 
 
 # Python 3.3 does not support ur'' syntax
@@ -76,38 +77,30 @@ class Line(text_type):
 
 
 @implements_iterator
-class LineIterator(object):
+class LineIterator(PushableIterator):
     def __init__(self, lines, lineno=0, columnno=1):
-        self.lines = iter(lines)
+        super(LineIterator, self).__init__(lines)
         self.lineno = lineno
         self.columnno = columnno
-        self.remaining = []
-
-    def __iter__(self):
-        return self
 
     def __next__(self):
-        if self.remaining:
-            line = self.remaining.pop()
-        else:
-            try:
-                line = next(self.lines)
-            except UnicodeDecodeError:
-                raise DocumentError(
-                    u'Could not decode characters in line %d, using %s.' % (
-                        self.lineno, u'utf-8'
-                    )
+        try:
+            if PY2:
+                line = super(LineIterator, self).next()
+            else:
+                line = super(LineIterator, self).__next__()
+        except UnicodeDecodeError:
+            raise DocumentError(
+                u'Could not decode characters in line %d, using %s.' % (
+                    self.lineno, u'utf-8'
                 )
+            )
         self.lineno += 1
         return Line(line.rstrip(u'\r\n'), self.lineno, self.columnno)
 
     def push(self, line):
         self.lineno -= 1
-        self.remaining.append(line)
-
-    def push_many(self, lines):
-        for line in lines:
-            self.push(line)
+        super(LineIterator, self).push(line)
 
     def until(self, condition):
         def inner():
