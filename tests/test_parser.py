@@ -297,6 +297,34 @@ class TestStrong(InlineMarkupTest):
         assert p.children[0].text == u'**foo**'
 
 
+class TestReference(object):
+    def test_only(self):
+        document = Parser.from_string(u'[foo]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].target == u'foo'
+
+    def test_escaping(self):
+        document = Parser.from_string(u'\[foo\]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'[foo]'
+
+        document = Parser.from_string(u'[foo\]bar]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].target == u'foo]bar'
+
+
 @pytest.mark.parametrize(('string', 'text', 'level'), [
     (u'# Hello', u'Hello', 1),
     (u'## Hello', u'Hello', 2)

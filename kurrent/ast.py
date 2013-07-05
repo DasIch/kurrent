@@ -136,6 +136,12 @@ class Header(ChildNode):
         self.level = level
 
 
+class Reference(ChildNode):
+    def __init__(self, target, start=None, end=None):
+        super(Reference, self).__init__(start=start, end=end)
+        self.target = target
+
+
 class UnorderedList(ParentNode):
     pass
 

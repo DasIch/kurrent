@@ -24,7 +24,13 @@ if PY2:
     text_type = unicode
 
     from itertools import ifilter
+
+    def iteritems(d):
+        return d.iteritems()
 else:
     implements_iterator = _identity
     text_type = str
     ifilter = filter
+
+    def iteritems(d):
+        return iter(d.items())

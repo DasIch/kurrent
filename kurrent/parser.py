@@ -9,10 +9,11 @@
 import io
 import re
 import codecs
+from itertools import groupby
 
 from . import ast
 from .utils import PushableIterator
-from ._compat import implements_iterator, text_type, PY2
+from ._compat import implements_iterator, text_type, PY2, iteritems
 
 
 # Python 3.3 does not support ur'' syntax
@@ -20,12 +21,23 @@ _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
+def escaped(regex):
+    return (u'\\\\' + regex, None)
+
+
 class InlineTokenizer(object):
     states = {
         None: [
             (u'(\*\*)', u'**'),
             (u'(\*)', u'*'),
-            (u'\\\\(\*)', None)
+            escaped(u'(\*)'),
+            escaped(u'(\[)'),
+            (u'(\[)', u'[', 'push', 'reference'),
+            escaped(u'(\])')
+        ],
+        'reference': [
+            (u'(\])', u']', 'pop'),
+            escaped(u'(\])')
         ]
     }
 
@@ -33,14 +45,29 @@ class InlineTokenizer(object):
         self.lines = lines
 
         self.states = self._compile_states(self.states)
-        self.state = self.states[None]
+        self.state_stack = [None]
+
+    @property
+    def state(self):
+        return self.states[self.state_stack[-1]]
 
     def _compile_states(self, states):
         rv = {}
-        for identifier, state in states.iteritems():
+        for identifier, state in iteritems(states):
             rv[identifier] = compiled_state = []
-            for regex, label in state:
-                compiled_state.append((re.compile(regex), label))
+            for rule in state:
+                method = None
+                args = []
+                if len(rule) == 2:
+                    regex, label = rule
+                elif len(rule) == 3:
+                    regex, label, method = rule
+                elif len(rule) > 3:
+                    regex, label, method = rule[:3]
+                    args = rule[3:]
+                else:
+                    assert False, (identifier, rule)
+                compiled_state.append((re.compile(regex), label, method, args))
         return rv
 
     def __iter__(self):
@@ -51,15 +78,19 @@ class InlineTokenizer(object):
                 first = False
             else:
                 yield Line(u' ', line.lineno - 1, end), None
-            for part in self.tokenize(line):
-                yield part
-            end = part[0].columnno
+            for mark, group in groupby(self.tokenize(line), lambda part: part[1]):
+                lexeme, mark = next(group)
+                for continuing_lexeme, _ in group:
+                    lexeme += continuing_lexeme
+                yield lexeme, mark
+            end = lexeme.columnno
+        assert self.state_stack == [None]
 
     def tokenize(self, line):
         columnno = text_columnno = 0
         text = []
         while line[columnno:]:
-            for regex, label in self.state:
+            for regex, label, method, args in self.state:
                 match = regex.match(line, columnno)
                 if match is not None:
                     break
@@ -76,9 +107,17 @@ class InlineTokenizer(object):
                 if match.end() <= columnno:
                     assert False
                 columnno = match.end()
+                if method is not None:
+                    getattr(self, method)(*args)
         if text:
             yield Line(u''.join(text), line.lineno, text_columnno + 1), None
             text = []
+
+    def push(self, state):
+        self.state_stack.append(state)
+
+    def pop(self):
+        self.state_stack.pop()
 
 
 class Line(text_type):
@@ -95,6 +134,12 @@ class Line(text_type):
     @property
     def end(self):
         return ast.Location(self.lineno, self.columnno + len(self))
+
+    def __add__(self, other):
+        if isinstance(other, self.__class__):
+            rv = super(Line, self).__add__(other)
+            return Line(rv, self.lineno, self.columnno)
+        return NotImplemented
 
 
 @implements_iterator
@@ -258,6 +303,8 @@ class Parser(object):
                 rv.append(self.parse_strong(inline_tokens, lexeme.start))
             elif mark == u'*':
                 rv.append(self.parse_emphasis(inline_tokens, lexeme.start))
+            elif mark == u'[':
+                rv.append(self.parse_reference(inline_tokens, lexeme.start))
             else:
                 raise NotImplementedError(lexeme, mark)
         return rv
@@ -295,6 +342,13 @@ class Parser(object):
             else:
                 raise NotImplementedError(lexeme, mark)
         return rv
+
+    def parse_reference(self, tokens, start):
+        target, mark = next(tokens)
+        assert mark is None
+        end_reference, mark = next(tokens)
+        assert mark == u']'
+        return ast.Reference(target, start, end_reference.end)
 
     def parse_header(self, line):
         match = _header_re.match(line)
