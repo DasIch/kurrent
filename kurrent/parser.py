@@ -20,44 +20,65 @@ _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
 
 
-def _make_tokenizer(marks):
-    parts = []
-    escape_character = re.escape(u'\\')
-    escaped_marks = list(map(re.escape, marks))
-    for mark in escaped_marks:
-        parts.append(u'((?<!{escape}){mark})'.format(
-            escape=escape_character,
-            mark=mark
-        ))
-    parts.append(u'{escape}([{marks}])'.format(
-        marks=u''.join(set(marks)),
-        escape=escape_character
-    ))
-    parts.append(u'([^{0}]+[^{0}\\\\])'.format(u''.join(set(marks))))
-    regex = re.compile(u'|'.join(parts))
-    def tokenizer(lines):
+class InlineTokenizer(object):
+    states = {
+        None: [
+            (u'(\*\*)', u'**'),
+            (u'(\*)', u'*'),
+            (u'\\\\(\*)', None)
+        ]
+    }
+
+    def __init__(self, lines):
+        self.lines = lines
+
+        self.states = self._compile_states(self.states)
+        self.state = self.states[None]
+
+    def _compile_states(self, states):
+        rv = {}
+        for identifier, state in states.iteritems():
+            rv[identifier] = compiled_state = []
+            for regex, label in state:
+                compiled_state.append((re.compile(regex), label))
+        return rv
+
+    def __iter__(self):
         first = True
         end = -1
-        for line in lines:
+        for line in self.lines:
             if first:
                 first = False
             else:
-                yield Line(u' ', line.lineno - 1 , end), None
-            for match in regex.finditer(line):
-                end = match.end()
-                if match.lastindex <= len(marks):
-                    mark = marks[match.lastindex - 1]
-                else:
-                    mark = None
-                yield (
-                    Line(
-                        match.group(match.lastindex),
-                        line.lineno,
-                        match.start() + 1
-                    ),
-                    mark
-                )
-    return tokenizer
+                yield Line(u' ', line.lineno - 1, end), None
+            for part in self.tokenize(line):
+                yield part
+            end = part[0].columnno
+
+    def tokenize(self, line):
+        columnno = text_columnno = 0
+        text = []
+        while line[columnno:]:
+            for regex, label in self.state:
+                match = regex.match(line, columnno)
+                if match is not None:
+                    break
+            else:
+                if not text:
+                    text_columnno = columnno
+                text.append(line[columnno:columnno + 1])
+                columnno += 1
+            if match is not None:
+                if text:
+                    yield Line(u''.join(text), line.lineno, text_columnno + 1), None
+                    text = []
+                yield Line(match.group(1), line.lineno, columnno + 1), label
+                if match.end() <= columnno:
+                    assert False
+                columnno = match.end()
+        if text:
+            yield Line(u''.join(text), line.lineno, text_columnno + 1), None
+            text = []
 
 
 class Line(text_type):
@@ -220,10 +241,9 @@ class Parser(object):
     def parse_paragraph(self, lines):
         return ast.Paragraph(children=self.parse_inline(lines))
 
-    _inline_tokenizer = staticmethod(_make_tokenizer([u'**', u'*']))
-
     def parse_inline(self, lines):
-        return self._parse_inline(PushableIterator(self._inline_tokenizer(lines)))
+        inline_tokens = PushableIterator(InlineTokenizer(lines))
+        return self._parse_inline(inline_tokens)
 
     def _parse_inline(self, inline_tokens):
         rv = []
