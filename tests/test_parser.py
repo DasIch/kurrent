@@ -635,8 +635,19 @@ class TestDefinition(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Definition)
         d = document.children[0]
+        assert d.type is None
         assert d.source == u'foo'
         assert d.signature == u'bar'
+        assert d.body == []
+
+    def test_simple_with_type(self):
+        document = Parser.from_string(u'[foo|bar]: baz').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Definition)
+        d = document.children[0]
+        assert d.type == u'foo'
+        assert d.source == u'bar'
+        assert d.signature == u'baz'
         assert d.body == []
 
     def test_simple_with_body(self):
@@ -650,6 +661,7 @@ class TestDefinition(object):
         assert len(document.children) == 2
         assert isinstance(document.children[0], ast.Definition)
         d = document.children[0]
+        assert d.type is None
         assert d.source == u'foo'
         assert d.signature == u'bar'
         assert d.body == [u'hello', u'world']

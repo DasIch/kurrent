@@ -33,6 +33,22 @@ _definition_re = re.compile(
     """.decode('utf-8'),
     re.VERBOSE
 )
+_definition_bracket_re = re.compile(
+    br"""
+        ((?:
+            [^\]\|]|
+            \\\]
+        )*)
+        (?:
+            \|
+            ((?:
+                [^\]]|
+                \\\]
+            )*)
+        )?
+    """.decode('utf-8'),
+    re.VERBOSE
+)
 
 
 def escaped(regex):
@@ -428,7 +444,13 @@ class Parser(object):
 
     def parse_definition(self, lines):
         match = _definition_re.match(lines[0])
-        source = match.group(1)
+        bracket = match.group(1)
         signature = match.group(2)
+        match = _definition_bracket_re.match(bracket)
+        if match.group(2) is None:
+            type = None
+            source = match.group(1)
+        else:
+            type, source = match.groups()
         body = list(LineIterator(lines[1:]).unindented())
-        return ast.Definition(source, signature, body)
+        return ast.Definition(type, source, signature, body)
