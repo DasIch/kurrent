@@ -223,9 +223,11 @@ class Parser(object):
     _inline_tokenizer = staticmethod(_make_tokenizer([u'**', u'*']))
 
     def parse_inline(self, lines):
+        return self._parse_inline(PushableIterator(self._inline_tokenizer(lines)))
+
+    def _parse_inline(self, inline_tokens):
         rv = []
-        tokens = self._inline_tokenizer(lines)
-        for lexeme, mark in tokens:
+        for lexeme, mark in inline_tokens:
             if mark is None:
                 if rv and isinstance(rv[-1], ast.Text):
                     rv[-1].text += lexeme
@@ -233,9 +235,9 @@ class Parser(object):
                 else:
                     rv.append(ast.Text(lexeme, lexeme.start, lexeme.end))
             elif mark == u'**':
-                rv.append(self.parse_strong(tokens, lexeme.start))
+                rv.append(self.parse_strong(inline_tokens, lexeme.start))
             elif mark == u'*':
-                rv.append(self.parse_emphasis(tokens, lexeme.start))
+                rv.append(self.parse_emphasis(inline_tokens, lexeme.start))
             else:
                 raise NotImplementedError(lexeme, mark)
         return rv
