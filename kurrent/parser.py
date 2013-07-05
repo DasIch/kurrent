@@ -33,11 +33,14 @@ class InlineTokenizer(object):
             escaped(u'(\*)'),
             escaped(u'(\[)'),
             (u'(\[)', u'[', 'push', 'reference'),
-            escaped(u'(\])')
+            escaped(u'(\])'),
+            escaped(u'(\|)')
         ],
         'reference': [
             (u'(\])', u']', 'pop'),
-            escaped(u'(\])')
+            escaped(u'(\])'),
+            (u'(\|)', u'|'),
+            escaped(u'(\|)')
         ]
     }
 
@@ -346,9 +349,17 @@ class Parser(object):
     def parse_reference(self, tokens, start):
         target, mark = next(tokens)
         assert mark is None
-        end_reference, mark = next(tokens)
-        assert mark == u']'
-        return ast.Reference(target, start, end_reference.end)
+        lexeme, mark = next(tokens)
+        if mark == u']':
+            type = None
+            end_reference = lexeme
+        elif mark == u'|':
+            type = target
+            target, mark = next(tokens)
+            assert mark is None
+            end_reference, mark = next(tokens)
+            assert mark == u']'
+        return ast.Reference(type, target, start, end_reference.end)
 
     def parse_header(self, line):
         match = _header_re.match(line)

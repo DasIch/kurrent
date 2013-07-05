@@ -305,7 +305,18 @@ class TestReference(object):
         p = document.children[0]
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].type is None
         assert p.children[0].target == u'foo'
+
+    def test_only_with_type(self):
+        document = Parser.from_string(u'[foo|bar]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].type == u'foo'
+        assert p.children[0].target == u'bar'
 
     def test_escaping(self):
         document = Parser.from_string(u'\[foo\]').parse()
@@ -322,7 +333,25 @@ class TestReference(object):
         p = document.children[0]
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].type is None
         assert p.children[0].target == u'foo]bar'
+
+        document = Parser.from_string(u'\|').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'|'
+
+        document = Parser.from_string(u'[foo\|bar|baz]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        assert p.children[0].type == u'foo|bar'
+        assert p.children[0].target == u'baz'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [

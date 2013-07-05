@@ -137,8 +137,9 @@ class Header(ChildNode):
 
 
 class Reference(ChildNode):
-    def __init__(self, target, start=None, end=None):
+    def __init__(self, type, target, start=None, end=None):
         super(Reference, self).__init__(start=start, end=end)
+        self.type = type
         self.target = target
 
 
