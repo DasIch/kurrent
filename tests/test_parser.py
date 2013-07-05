@@ -627,3 +627,35 @@ class TestOrderedList(object):
             assert len(p.children) == 1
             assert isinstance(p.children[0], ast.Text)
             assert p.children[0].text == text
+
+
+class TestDefinition(object):
+    def test_simple(self):
+        document = Parser.from_string(u'[foo]: bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Definition)
+        d = document.children[0]
+        assert d.source == u'foo'
+        assert d.signature == u'bar'
+        assert d.body == []
+
+    def test_simple_with_body(self):
+        document = Parser.from_string(
+            u'[foo]: bar\n'
+            u' hello\n'
+            u' world\n'
+            u'\n'
+            u'blubb'
+        ).parse()
+        assert len(document.children) == 2
+        assert isinstance(document.children[0], ast.Definition)
+        d = document.children[0]
+        assert d.source == u'foo'
+        assert d.signature == u'bar'
+        assert d.body == [u'hello', u'world']
+
+        assert isinstance(document.children[1], ast.Paragraph)
+        p = document.children[1]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'blubb'

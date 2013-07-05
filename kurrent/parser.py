@@ -19,6 +19,20 @@ from ._compat import implements_iterator, text_type, PY2, iteritems
 # Python 3.3 does not support ur'' syntax
 _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
+_definition_re = re.compile(
+    br"""
+        \[
+        ((?:
+            [^\]]| # non-bracket
+            \\\]   # escaped-bracket
+        )*)
+        \]:
+        \s*
+        (.*)
+        \s*
+    """.decode('utf-8'),
+    re.VERBOSE
+)
 
 
 def escaped(regex):
@@ -86,7 +100,7 @@ class InlineTokenizer(object):
                 for continuing_lexeme, _ in group:
                     lexeme += continuing_lexeme
                 yield lexeme, mark
-            end = lexeme.columnno
+                end = lexeme.columnno
         assert self.state_stack == [None]
 
     def tokenize(self, line):
@@ -208,7 +222,14 @@ class LineIterator(PushableIterator):
         while True:
             yield self.next_block()
 
-    def unindented(self, spaces):
+    def unindented(self, spaces=None):
+        if spaces is None:
+            try:
+                line = next(self)
+            except StopIteration:
+                return []
+            self.push(line)
+            spaces = len(line) - len(line.lstrip())
         def inner():
             for line in self:
                 if line:
@@ -284,6 +305,8 @@ class Parser(object):
                 return self.parse_ordered_list(lines)
             except BadPath:
                 pass
+        if _definition_re.match(lines[0]):
+            return self.parse_definition(lines)
         return self.parse_paragraph(lines)
 
     def parse_paragraph(self, lines):
@@ -402,3 +425,10 @@ class Parser(object):
                 ])
             )
         return rv
+
+    def parse_definition(self, lines):
+        match = _definition_re.match(lines[0])
+        source = match.group(1)
+        signature = match.group(2)
+        body = list(LineIterator(lines[1:]).unindented())
+        return ast.Definition(source, signature, body)

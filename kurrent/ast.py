@@ -143,6 +143,14 @@ class Reference(ChildNode):
         self.target = target
 
 
+class Definition(ChildNode):
+    def __init__(self, source, signature, body, start=None, end=None):
+        super(Definition, self).__init__(start=start, end=end)
+        self.source = source
+        self.signature = signature
+        self.body = body
+
+
 class UnorderedList(ParentNode):
     pass
 
