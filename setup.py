@@ -1,10 +1,25 @@
 # coding: utf-8
+import os
+import codecs
+
 from setuptools import setup
+
+
+PACKAGE_PATH = os.path.join(os.path.dirname(__file__), 'kurrent')
+
+
+def get_version():
+    init_file_path = os.path.join(PACKAGE_PATH, '__init__.py')
+    with codecs.open(init_file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            if line.startswith(u'__version__'):
+                return line.split(u'=')[1].replace(u"'", u'').strip()
+    raise ValueError('__version__ not found in %s' % init_file_path)
 
 
 setup(
     name='Kurrent',
-    version='0.1.0-dev',
+    version=get_version(),
     license='BSD',
     author='Daniel Neuhäuser',
     author_email='ich@danielneuhaeuser.de',

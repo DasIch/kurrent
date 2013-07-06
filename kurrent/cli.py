@@ -13,6 +13,7 @@ import textwrap
 
 from docopt import docopt
 
+from kurrent import __version__
 from kurrent.builders import SingleDocumentBuilder
 from kurrent.writers import HTML5Writer, KurrentWriter
 
@@ -37,7 +38,7 @@ def main(argv=sys.argv):
     arguments = docopt(
         textwrap.dedent(main.__doc__),
         argv=argv[1:],
-        version='Kurrent 0.1.0-dev',
+        version=u'Kurrent %s' % __version__,
         options_first=True
     )
     arguments['<args>'].insert(0, arguments['<command>'])

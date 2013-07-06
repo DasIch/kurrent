@@ -10,6 +10,8 @@ import subprocess
 
 import pytest
 
+from kurrent import __version__
+
 
 class CLITest(object):
     def execute(self, command):
@@ -38,7 +40,7 @@ class TestMain(CLITest):
             ['kurrent', '--version']
         )
         assert returncode == 0
-        assert stdout == b'Kurrent 0.1.0-dev\n'
+        assert stdout == (u'Kurrent %s\n' % __version__).encode('ascii')
         assert stderr == b''
 
     @pytest.fixture
