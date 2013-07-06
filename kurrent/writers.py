@@ -222,3 +222,7 @@ class HTML5Writer(Writer):
         self.write(u'">')
         self.write(markupsafe.escape(node.text))
         self.write(u'</a>')
+
+    def write_Definition(self, node):
+        # prevents NotImplementedError, we ignore Definitions
+        pass

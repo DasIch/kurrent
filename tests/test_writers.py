@@ -176,3 +176,7 @@ class TestHTML5Writer(WriterTest):
 
         reference = ast.Reference(None, u'foo', u'bar', definition=u'baz')
         self.check_node(reference, u'<a href="baz">bar</a>')
+
+    def test_doesnt_write_definition(self):
+        definition = ast.Definition(None, u'foo', u'bar', [])
+        self.check_node(definition, u'')
