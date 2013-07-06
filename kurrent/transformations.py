@@ -59,3 +59,9 @@ class DefaultReferenceTransformation(Transformation):
     def transform(self, node):
         definitions = self.context.get('definitions', {}).get(None, {})
         node.definition = definitions[node.target]
+
+
+CORE_TRANSFORMATIONS = [
+    TitleTransformation, DefaultDefinitionTransformation,
+    DefaultReferenceTransformation
+]

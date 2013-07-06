@@ -1,2 +1,3 @@
 include LICENSE.rst Makefile
 recursive-include tests *.py
+recursive-include tests *.kr

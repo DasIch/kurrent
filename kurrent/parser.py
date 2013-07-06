@@ -272,7 +272,7 @@ class Parser(object):
 
     @classmethod
     def from_path(cls, path):
-        return cls(codecs.open(path, 'r', encodings=cls.encoding),
+        return cls(codecs.open(path, 'r', encoding=cls.encoding),
                    filename=path)
 
     @classmethod
