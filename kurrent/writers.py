@@ -215,3 +215,10 @@ class HTML5Writer(Writer):
         self.write(u'<strong>')
         yield True
         self.write(u'</strong>')
+
+    def write_Reference(self, node):
+        self.write(u'<a href="')
+        self.write(node.definition)
+        self.write(u'">')
+        self.write(markupsafe.escape(node.text))
+        self.write(u'</a>')

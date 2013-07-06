@@ -169,3 +169,10 @@ class TestHTML5Writer(WriterTest):
     def test_write_strong(self):
         strong = ast.Strong(children=[ast.Text(u'foo')])
         self.check_node(strong, u'<strong>foo</strong>')
+
+    def test_write_reference(self):
+        reference = ast.Reference(None, u'foo', u'foo', definition=u'bar')
+        self.check_node(reference, u'<a href="bar">foo</a>')
+
+        reference = ast.Reference(None, u'foo', u'bar', definition=u'baz')
+        self.check_node(reference, u'<a href="baz">bar</a>')
