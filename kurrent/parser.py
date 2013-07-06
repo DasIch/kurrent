@@ -63,8 +63,7 @@ class InlineTokenizer(object):
             escaped(u'(\*)'),
             escaped(u'(\[)'),
             (u'(\[)', u'[', 'push', 'reference'),
-            escaped(u'(\])'),
-            escaped(u'(\|)')
+            escaped(u'(\])')
         ],
         'reference': [
             (u'(\]\()', u']('),

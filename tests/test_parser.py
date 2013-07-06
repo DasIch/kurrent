@@ -361,14 +361,6 @@ class TestReference(object):
         assert p.children[0].type is None
         assert p.children[0].target == u'foo]bar'
 
-        document = Parser.from_string(u'\|').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
-        assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'|'
-
         document = Parser.from_string(u'[foo\|bar|baz]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
