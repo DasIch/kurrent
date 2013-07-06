@@ -394,23 +394,26 @@ class Parser(object):
         assert mark is None
         lexeme, mark = next(tokens)
         if mark == u']':
-            end_reference = lexeme
+            end = lexeme.end
         elif mark == u'|':
             type = target
             target, mark = next(tokens)
             assert mark is None
-            end_reference, mark = next(tokens)
+            end_lexeme, mark = next(tokens)
+            end = end_lexeme.end
             assert mark in [u']', u'](']
             if mark == u'](':
                 definition, mark = next(tokens)
-                end_reference, mark = next(tokens)
+                end_lexeme, mark = next(tokens)
+                end = end_lexeme.end
                 assert mark == u')'
         elif mark == u'](':
             definition, mark = next(tokens)
-            end_reference, mark = next(tokens)
+            end_lexeme, mark = next(tokens)
+            end = end_lexeme.end
             assert mark == u')'
         return ast.Reference(type, target, definition, start=start,
-                             end=end_reference.end)
+                             end=end)
 
     def parse_header(self, line):
         match = _header_re.match(line)
