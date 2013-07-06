@@ -400,7 +400,11 @@ class Parser(object):
             target, mark = next(tokens)
             assert mark is None
             end_reference, mark = next(tokens)
-            assert mark == u']'
+            assert mark in [u']', u'](']
+            if mark == u'](':
+                definition, mark = next(tokens)
+                end_reference, mark = next(tokens)
+                assert mark == u')'
         elif mark == u'](':
             definition, mark = next(tokens)
             end_reference, mark = next(tokens)

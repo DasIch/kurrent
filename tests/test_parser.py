@@ -331,6 +331,18 @@ class TestReference(object):
         assert r.target == u'foo'
         assert r.definition == u'bar'
 
+    def test_only_with_type_and_inline_definition(self):
+        document = Parser.from_string(u'[foo|bar](baz)').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'foo'
+        assert r.target == u'bar'
+        assert r.definition == u'baz'
+
     def test_escaping(self):
         document = Parser.from_string(u'\[foo\]').parse()
         assert len(document.children) == 1
