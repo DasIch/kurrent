@@ -136,6 +136,21 @@ class KurrentWriter(Writer):
         yield True
         self.write(u'**')
 
+    def write_Reference(self, node):
+        self.write(u'[')
+        if node.target != node.text:
+            self.write(node.text)
+            self.write(u'][')
+        if node.type is not None:
+            self.write(node.type)
+            self.write(u'|')
+        self.write(node.target)
+        self.write(u']')
+        if node.definition is not None:
+            self.write(u'(')
+            self.write(node.definition)
+            self.write(u')')
+
 
 class HTML5Writer(Writer):
     def write_Text(self, node):

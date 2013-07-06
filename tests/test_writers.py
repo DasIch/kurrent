@@ -82,6 +82,28 @@ class TestKurrentWriter(WriterTest):
         strong = ast.Strong(children=[ast.Text(u'foo')])
         self.check_node(strong, u'**foo**')
 
+    def test_reference(self):
+        reference = ast.Reference(None, u'foo', u'foo')
+        self.check_node(reference, u'[foo]')
+
+        reference = ast.Reference(u'foo', u'bar', u'bar')
+        self.check_node(reference, u'[foo|bar]')
+
+        reference = ast.Reference(None, u'foo', u'bar')
+        self.check_node(reference, u'[bar][foo]')
+
+        reference = ast.Reference(None, u'foo', u'foo', definition=u'bar')
+        self.check_node(reference, u'[foo](bar)')
+
+        reference = ast.Reference(u'foo', u'bar', u'bar', definition=u'baz')
+        self.check_node(reference, u'[foo|bar](baz)')
+
+        reference = ast.Reference(None, u'foo', u'bar', definition=u'baz')
+        self.check_node(reference, u'[bar][foo](baz)')
+
+        reference = ast.Reference(u'foo', u'bar', u'baz', definition=u'spam')
+        self.check_node(reference, u'[baz][foo|bar](spam)')
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer
