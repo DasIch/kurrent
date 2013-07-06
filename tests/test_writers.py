@@ -104,6 +104,22 @@ class TestKurrentWriter(WriterTest):
         reference = ast.Reference(u'foo', u'bar', u'baz', definition=u'spam')
         self.check_node(reference, u'[baz][foo|bar](spam)')
 
+    def test_definition(self):
+        definition = ast.Definition(None, u'foo', u'', [])
+        self.check_node(definition, u'[foo]:\n\n')
+
+        definition = ast.Definition(None, u'foo', u'bar', [])
+        self.check_node(definition, u'[foo]: bar\n\n')
+
+        definition = ast.Definition(u'foo', u'bar', u'', [])
+        self.check_node(definition, u'[foo|bar]:\n\n')
+
+        definition = ast.Definition(u'foo', u'bar', u'baz', [])
+        self.check_node(definition, u'[foo|bar]: baz\n\n')
+
+        definition = ast.Definition(None, u'foo', u'', [u'hello', u'world'])
+        self.check_node(definition, u'[foo]:\n  hello\n  world\n\n')
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer

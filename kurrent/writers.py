@@ -151,6 +151,23 @@ class KurrentWriter(Writer):
             self.write(node.definition)
             self.write(u')')
 
+    def write_Definition(self, node):
+        self.write(u'[')
+        if node.type is not None:
+            self.write(node.type)
+            self.write(u'|')
+        self.write(node.source)
+        self.write(u']:')
+        if node.signature:
+            self.write(u' ')
+            self.write(node.signature)
+        with self.indent(u'  '):
+            self.newline()
+            for line in node.body:
+                self.write(line)
+                self.newline()
+        self.write_block_newline()
+
 
 class HTML5Writer(Writer):
     def write_Text(self, node):
