@@ -306,7 +306,7 @@ class TestReference(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Reference)
         assert p.children[0].type is None
-        assert p.children[0].target == u'foo'
+        assert p.children[0].target == p.children[0].text == u'foo'
 
     def test_only_with_type(self):
         document = Parser.from_string(u'[foo|bar]').parse()
@@ -317,7 +317,7 @@ class TestReference(object):
         assert isinstance(p.children[0], ast.Reference)
         r = p.children[0]
         assert r.type == u'foo'
-        assert r.target == u'bar'
+        assert r.target == r.text == u'bar'
 
     def test_only_with_inline_definition(self):
         document = Parser.from_string(u'[foo](bar)').parse()
@@ -328,7 +328,7 @@ class TestReference(object):
         assert isinstance(p.children[0], ast.Reference)
         r = p.children[0]
         assert r.type is None
-        assert r.target == u'foo'
+        assert r.target == r.text == u'foo'
         assert r.definition == u'bar'
 
     def test_only_with_type_and_inline_definition(self):
@@ -340,8 +340,60 @@ class TestReference(object):
         assert isinstance(p.children[0], ast.Reference)
         r = p.children[0]
         assert r.type == u'foo'
-        assert r.target == u'bar'
+        assert r.target == r.text == u'bar'
         assert r.definition == u'baz'
+
+    def test_only_with_text(self):
+        document = Parser.from_string(u'[foo][bar]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == u'bar'
+        assert r.text == u'foo'
+        assert r.definition is None
+
+    def test_only_with_text_and_type(self):
+        document = Parser.from_string(u'[foo][bar|baz]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'bar'
+        assert r.target == u'baz'
+        assert r.text == u'foo'
+        assert r.definition is None
+
+    def test_only_with_text_and_definition(self):
+        document = Parser.from_string(u'[foo][bar](baz)').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == u'bar'
+        assert r.text == u'foo'
+        assert r.definition == u'baz'
+
+    def test_only_with_text_and_type_and_definition(self):
+        document = Parser.from_string(u'[foo][bar|baz](spam)').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'bar'
+        assert r.target == u'baz'
+        assert r.text == u'foo'
+        assert r.definition == u'spam'
 
     def test_escaping(self):
         document = Parser.from_string(u'\[foo\]').parse()
@@ -359,7 +411,7 @@ class TestReference(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Reference)
         assert p.children[0].type is None
-        assert p.children[0].target == u'foo]bar'
+        assert p.children[0].target == p.children[0].text == u'foo]bar'
 
         document = Parser.from_string(u'[foo\|bar|baz]').parse()
         assert len(document.children) == 1
@@ -368,7 +420,7 @@ class TestReference(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Reference)
         assert p.children[0].type == u'foo|bar'
-        assert p.children[0].target == u'baz'
+        assert p.children[0].target == p.children[0].text == u'baz'
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [

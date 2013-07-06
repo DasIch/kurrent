@@ -67,6 +67,7 @@ class InlineTokenizer(object):
         ],
         'reference': [
             (u'(\]\()', u']('),
+            (u'(\]\[)', u']['),
             (u'(\])', u']', 'pop'),
             escaped(u'(\])'),
             (u'(\|)', u'|'),
@@ -388,34 +389,56 @@ class Parser(object):
         return rv
 
     def parse_reference(self, tokens, start):
-        # [foo]          => None ]
-        # [foo|bar]      => None |  None ]
-        # [foo](bar)     => None ]( None )
-        # [foo|bar](baz) => None |  None ]( None )
-        #                        !       !
-        lookahead = list(islice(tokens, 4))
+        # [foo]                => None ]
+        # [foo|bar]            => None |  None ]
+        # [foo](bar)           => None ]( None )
+        # [foo|bar](baz)       => None |  None ]( None )
+        # [foo][bar]           => None ][ None ]
+        # [foo][bar|baz]       => None ][ None |  None ]
+        # [foo][bar|baz](spam) => None ][ None |  None ]( None )
+        # [foo][bar](baz)      => None ][ None ]( None )
+        #                              !       !       !
+        lookahead = list(islice(tokens, 6))
         tokens.push_many(reversed(lookahead))
-        if len(lookahead) > 2:
+        if len(lookahead) == 6:
+            identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
+        elif len(lookahead) == 4:
             identifier = lookahead[1][1], lookahead[3][1]
         else:
-            identifier = lookahead[1][1], None
-        if identifier[0] == u']': # [ None ]
+            identifier = lookahead[1][1],
+        if identifier[0] == u']':
             return self.parse_reference_simple(tokens, start)
-        elif identifier == (u'|', u']'): # [ None | None ]
+        elif identifier[:2] == (u'|', u']'):
             return self.parse_reference_type(tokens, start)
-        elif identifier == (u'|', u']('): # [ None | None ]( None )
+        elif identifier[:2] == (u'|', u']('):
             return self.parse_reference_type_definition(tokens, start)
-        elif identifier[0] == u'](': # [ None ]( None )
+        elif identifier[0] == u'](':
             return self.parse_reference_definition(tokens, start)
-        else:
-            raise NotImplemented(identifier)
+        elif identifier[0] == u'][':
+            text, mark = next(tokens)
+            assert mark is None
+            assert next(tokens)[1] == u']['
+            if identifier[1:] == (u']', ):
+                ref = self.parse_reference_simple(tokens, start)
+            elif identifier[1:] == (u'|', u']'):
+                ref = self.parse_reference_type(tokens, start)
+            elif identifier[1:] == (u'|', u']('):
+                ref = self.parse_reference_type_definition(tokens, start)
+            elif identifier[1:] == (u'](', u')'):
+                ref = self.parse_reference_definition(tokens, start)
+            else:
+                raise NotImplementedError(identifier)
+            ref.text = text
+            return ref
+        raise NotImplementedError(identifier)
 
     def parse_reference_simple(self, tokens, start):
         target, mark = next(tokens)
         assert mark is None
         end_lexeme, mark = next(tokens)
         assert mark == u']'
-        return ast.Reference(None, target, start=start, end=end_lexeme.end)
+        return ast.Reference(None, target, target, start=start,
+                             end=end_lexeme.end)
 
     def parse_reference_type(self, tokens, start):
         type, mark = next(tokens)
@@ -424,7 +447,8 @@ class Parser(object):
         target, mark = next(tokens)
         assert mark is None
         end_lexeme, mark = next(tokens)
-        return ast.Reference(type, target, start=start, end=end_lexeme.end)
+        return ast.Reference(type, target, target, start=start,
+                             end=end_lexeme.end)
 
     def parse_reference_type_definition(self, tokens, start):
         type, mark = next(tokens)
@@ -437,7 +461,7 @@ class Parser(object):
         assert mark is None
         end_lexeme, mark = next(tokens)
         assert mark == u')'
-        return ast.Reference(type, target, definition=definition,
+        return ast.Reference(type, target, target, definition=definition,
                              start=start, end=end_lexeme.end)
 
     def parse_reference_definition(self, tokens, start):
@@ -448,7 +472,7 @@ class Parser(object):
         assert mark is None
         end_lexeme, mark = next(tokens)
         assert mark == u')'
-        return ast.Reference(None, target, definition=definition,
+        return ast.Reference(None, target, target, definition=definition,
                              start=start, end=end_lexeme.end)
 
     def parse_header(self, line):

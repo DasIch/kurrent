@@ -31,7 +31,7 @@ def test_default_definition_transformation():
 
 def test_default_reference_transformation():
     document = ast.Document('<test>', children=[
-        ast.Reference(None, u'foo')
+        ast.Reference(None, u'foo', u'foo')
     ])
     definition = ast.Definition(None, u'foo', u'bar', [])
     context = {
@@ -49,7 +49,7 @@ def test_default_reference_transformation():
 def test_default_definition_reference_transformation():
     definition = ast.Definition(None, u'foo', u'bar', [])
     document = ast.Document('<test>', children=[
-        ast.Reference(None, u'foo'),
+        ast.Reference(None, u'foo', u'foo'),
         definition
     ])
     context = {}
