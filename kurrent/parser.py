@@ -9,7 +9,7 @@
 import io
 import re
 import codecs
-from itertools import groupby
+from itertools import groupby, islice
 
 from . import ast
 from .utils import PushableIterator
@@ -388,31 +388,68 @@ class Parser(object):
         return rv
 
     def parse_reference(self, tokens, start):
-        type = definition = None
+        # [foo]          => None ]
+        # [foo|bar]      => None |  None ]
+        # [foo](bar)     => None ]( None )
+        # [foo|bar](baz) => None |  None ]( None )
+        #                        !       !
+        lookahead = list(islice(tokens, 4))
+        tokens.push_many(reversed(lookahead))
+        if len(lookahead) > 2:
+            identifier = lookahead[1][1], lookahead[3][1]
+        else:
+            identifier = lookahead[1][1], None
+        if identifier[0] == u']': # [ None ]
+            return self.parse_reference_simple(tokens, start)
+        elif identifier == (u'|', u']'): # [ None | None ]
+            return self.parse_reference_type(tokens, start)
+        elif identifier == (u'|', u']('): # [ None | None ]( None )
+            return self.parse_reference_type_definition(tokens, start)
+        elif identifier[0] == u'](': # [ None ]( None )
+            return self.parse_reference_definition(tokens, start)
+        else:
+            raise NotImplemented(identifier)
+
+    def parse_reference_simple(self, tokens, start):
         target, mark = next(tokens)
         assert mark is None
-        lexeme, mark = next(tokens)
-        if mark == u']':
-            end = lexeme.end
-        elif mark == u'|':
-            type = target
-            target, mark = next(tokens)
-            assert mark is None
-            end_lexeme, mark = next(tokens)
-            end = end_lexeme.end
-            assert mark in [u']', u'](']
-            if mark == u'](':
-                definition, mark = next(tokens)
-                end_lexeme, mark = next(tokens)
-                end = end_lexeme.end
-                assert mark == u')'
-        elif mark == u'](':
-            definition, mark = next(tokens)
-            end_lexeme, mark = next(tokens)
-            end = end_lexeme.end
-            assert mark == u')'
-        return ast.Reference(type, target, definition, start=start,
-                             end=end)
+        end_lexeme, mark = next(tokens)
+        assert mark == u']'
+        return ast.Reference(None, target, start=start, end=end_lexeme.end)
+
+    def parse_reference_type(self, tokens, start):
+        type, mark = next(tokens)
+        assert mark is None
+        assert next(tokens)[1] == u'|'
+        target, mark = next(tokens)
+        assert mark is None
+        end_lexeme, mark = next(tokens)
+        return ast.Reference(type, target, start=start, end=end_lexeme.end)
+
+    def parse_reference_type_definition(self, tokens, start):
+        type, mark = next(tokens)
+        assert mark is None
+        assert next(tokens)[1] == u'|'
+        target, mark = next(tokens)
+        assert mark is None
+        assert next(tokens)[1] == u']('
+        definition, mark = next(tokens)
+        assert mark is None
+        end_lexeme, mark = next(tokens)
+        assert mark == u')'
+        return ast.Reference(type, target, definition=definition,
+                             start=start, end=end_lexeme.end)
+
+    def parse_reference_definition(self, tokens, start):
+        target, mark = next(tokens)
+        assert mark is None
+        assert next(tokens)[1] == u']('
+        definition, mark = next(tokens)
+        assert mark is None
+        end_lexeme, mark = next(tokens)
+        assert mark == u')'
+        return ast.Reference(None, target, definition=definition,
+                             start=start, end=end_lexeme.end)
 
     def parse_header(self, line):
         match = _header_re.match(line)
