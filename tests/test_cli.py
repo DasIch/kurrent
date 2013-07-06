@@ -56,7 +56,6 @@ class TestMain(CLITest):
         )
         assert returncode == 1
         assert stderr == b"Error: 'does-not-exist' is not a kurrent command.\n\n"
-
         assert stdout == help_text
 
 
