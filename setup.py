@@ -11,7 +11,15 @@ setup(
     url='https://github.com/DasIch/kurrent',
     packages=['kurrent'],
     include_package_data=True,
-    install_requires=['MarkupSafe>=0.18'],
+    entry_points={
+        'console_scripts': [
+            'kurrent = kurrent.cli:main'
+        ]
+    },
+    install_requires=[
+        'MarkupSafe>=0.18',
+        'docopt>=0.6.1'
+    ],
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',

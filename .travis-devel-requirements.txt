@@ -1,1 +1,2 @@
 git+https://github.com/mitsuhiko/markupsafe.git#egg=MarkupSafe
+git+https://github.com/docopt/docopt.git#egg=docopt
