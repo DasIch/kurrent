@@ -49,7 +49,7 @@ class DefaultDefinitionTransformation(Transformation):
     def transform(self, node):
         known_definitions = self.context.setdefault('definitions', {})
         known_default_definitions = known_definitions.setdefault(None, {})
-        known_default_definitions[node.source] = node
+        known_default_definitions[node.source] = node.signature
 
 
 class DefaultReferenceTransformation(Transformation):

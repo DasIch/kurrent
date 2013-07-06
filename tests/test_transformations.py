@@ -20,13 +20,12 @@ def test_title_transformation():
 
 
 def test_default_definition_transformation():
-    definition = ast.Definition(None, u'foo', u'bar', [])
     document = ast.Document('<test>', children=[
-        definition
+        ast.Definition(None, u'foo', u'bar', [])
     ])
     context = {}
     DefaultDefinitionTransformation(document, context).apply()
-    assert context['definitions'][None][u'foo'] is definition
+    assert context['definitions'][None][u'foo'] == u'bar'
 
 
 def test_default_reference_transformation():
@@ -47,13 +46,12 @@ def test_default_reference_transformation():
 
 
 def test_default_definition_reference_transformation():
-    definition = ast.Definition(None, u'foo', u'bar', [])
     document = ast.Document('<test>', children=[
         ast.Reference(None, u'foo', u'foo'),
-        definition
+        ast.Definition(None, u'foo', u'bar', [])
     ])
     context = {}
     DefaultDefinitionTransformation(document, context).apply()
     assert document.children[0].definition is None
     DefaultReferenceTransformation(document, context).apply()
-    assert document.children[0].definition is definition
+    assert document.children[0].definition == u'bar'
