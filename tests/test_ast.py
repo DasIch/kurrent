@@ -133,15 +133,15 @@ class TestDocument(ParentNodeTest):
     def test_init(self):
         document = Document('foo')
         assert document.filename == 'foo'
-        assert document.title is None
+        assert document.metadata == {}
         assert document.children == []
         assert document.parent is None
         assert document.start is None
         assert document.end is None
 
-        document = Document('foo', title=u'bar')
+        document = Document('foo', metadata={'title': u'bar'})
         assert document.filename == 'foo'
-        assert document.title == u'bar'
+        assert document.metadata == {'title': u'bar'}
         assert document.children == []
         assert document.parent is None
         assert document.start is None

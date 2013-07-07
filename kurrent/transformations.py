@@ -38,7 +38,7 @@ class TitleTransformation(Transformation):
         return isinstance(node, ast.Header)
 
     def transform(self, node):
-        self.document.title = node.text
+        self.document.metadata['title'] = node.text
         raise StopTransformation()
 
 

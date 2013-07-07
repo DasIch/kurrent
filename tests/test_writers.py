@@ -171,7 +171,7 @@ class TestHTML5Writer(WriterTest):
         )
         self.check_node(document, u'<!doctype html><title></title><p>foo</p>')
 
-        document = ast.Document('<test>', title=u'foo')
+        document = ast.Document('<test>', metadata={'title': u'foo'})
         self.check_node(document, u'<!doctype html><title>foo</title>')
 
     def test_write_emphasis(self):
@@ -199,7 +199,7 @@ class TestManWriter(WriterTest):
 
     @pytest.fixture
     def document_sample(self):
-        return ast.Document('<test>', title=u'foo', children=[
+        return ast.Document('<test>', metadata={'title': u'foo'}, children=[
             ast.Paragraph(children=[
                 ast.Text(u'some regular text'),
                 ast.Emphasis(children=[
@@ -258,7 +258,7 @@ class TestManWriter(WriterTest):
         assert stdout
 
     def test_document(self):
-        document = ast.Document('<test>', title=u'foo')
+        document = ast.Document('<test>', metadata={'title': u'foo'})
         self.match_node(document, u'.TH "foo" "1" "\d{2} \w+ \d{4}" ""\n')
 
     def test_header(self):

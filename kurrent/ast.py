@@ -98,10 +98,10 @@ class ParentNode(ASTNode):
 
 
 class Document(ParentNode):
-    def __init__(self, filename, title=None, children=None):
+    def __init__(self, filename, metadata=None, children=None):
         super(Document, self).__init__(children=children)
         self.filename = filename
-        self.title = title
+        self.metadata = {} if metadata is None else metadata
 
 
 class Paragraph(ParentNode):

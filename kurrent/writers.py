@@ -203,7 +203,7 @@ class HTML5Writer(Writer):
     def write_Document(self, node):
         self.write(u'<!doctype html>')
         self.write(u'<title>%s</title>' % (
-            u'' if node.title is None else node.title
+            node.metadata.get('title', u'')
         ))
         yield True
 
@@ -235,7 +235,7 @@ class ManWriter(Writer):
     @contextmanager
     def write_Document(self, node):
         self.write(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
-            title=u'' if node.title is None else node.title,
+            title=node.metadata.get('title', u''),
             section=1,
             date=datetime.now().strftime(u'%d %B %Y'),
             author=u''

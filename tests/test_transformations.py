@@ -16,7 +16,7 @@ from kurrent.transformations import (
 def test_title_transformation():
     document = ast.Document('<test>', children=[ast.Header(u'foo', 1)])
     TitleTransformation(document, {}).apply()
-    assert document.title == u'foo'
+    assert document.metadata['title'] == u'foo'
 
 
 def test_default_definition_transformation():
