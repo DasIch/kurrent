@@ -1,0 +1,11 @@
+# Kurrent
+
+Kurrent is an extensible markup language and document generation tool. At the
+moment it is still experimental and may undergo drastic design changes.
+
+The idea is to create a language that is easy to type, read, understand,
+inspired by the simplicity of Markdown[1] and the extensibility of
+reStructuredText[2].
+
+[1]: http://daringfireball.net/projects/markdown/
+[2]: http://docutils.sourceforge.net/rst.html
