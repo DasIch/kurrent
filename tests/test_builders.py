@@ -8,7 +8,6 @@
 """
 import os
 import codecs
-import tempfile
 import textwrap
 
 import pytest
@@ -18,13 +17,6 @@ from kurrent.writers import KurrentWriter, HTML5Writer
 
 
 TEST_DOCUMENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
-
-
-@pytest.fixture
-def temp_file_path(request):
-    file_path = tempfile.mkstemp()[1]
-    request.addfinalizer(lambda: os.remove(file_path))
-    return file_path
 
 
 def read_file(path, encoding='utf-8'):

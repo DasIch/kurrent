@@ -12,7 +12,7 @@ dev:
 	pip install -r dev-requirements.txt
 
 test:
-	py.test
+	py.test -r s
 
 style:
 	find kurrent tests -iname "*.py" | xargs pyflakes

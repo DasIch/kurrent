@@ -6,20 +6,32 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import re
+import codecs
+import subprocess
 from io import StringIO
 
+import pytest
+
 from kurrent import ast
-from kurrent.writers import KurrentWriter, HTML5Writer
+from kurrent.writers import KurrentWriter, HTML5Writer, ManWriter
 
 
 class WriterTest(object):
     writer_cls = None
 
-    def check_node(self, node, result):
-        __tracebackhide__ = True
+    def render_node(self, node):
         stream = StringIO()
         self.writer_cls(stream).write_node(node)
-        assert stream.getvalue() == result
+        return stream.getvalue()
+
+    def check_node(self, node, result):
+        __tracebackhide__ = True
+        assert self.render_node(node) == result
+
+    def match_node(self, node, regex):
+        __tracebackhide__ = True
+        assert re.match(regex, self.render_node(node)) is not None
 
 
 class TestKurrentWriter(WriterTest):
@@ -180,3 +192,156 @@ class TestHTML5Writer(WriterTest):
     def test_doesnt_write_definition(self):
         definition = ast.Definition(None, u'foo', u'bar', [])
         self.check_node(definition, u'')
+
+
+class TestManWriter(WriterTest):
+    writer_cls = ManWriter
+
+    @pytest.fixture
+    def document_sample(self):
+        return ast.Document('<test>', title=u'foo', children=[
+            ast.Paragraph(children=[
+                ast.Text(u'some regular text'),
+                ast.Emphasis(children=[
+                    ast.Text(u'something emphasized')
+                ]),
+                ast.Strong(children=[
+                    ast.Text(u'something strongly emphasized')
+                ])
+            ]),
+            ast.UnorderedList(children=[
+                ast.ListItem(children=[
+                    ast.Paragraph(children=[
+                        ast.Text(u'a list item')
+                    ]),
+                    ast.Paragraph(children=[
+                        ast.Text(u'with two paragraphs')
+                    ])
+                ]),
+                ast.ListItem(children=[
+                    ast.Paragraph(children=[
+                        ast.Text(u'another list item')
+                    ])
+                ])
+            ]),
+            ast.OrderedList(children=[
+                ast.ListItem(children=[
+                    ast.Paragraph(children=[
+                        ast.Text(u'a list item in an ordered list')
+                    ])
+                ])
+            ])
+        ])
+
+    @pytest.fixture
+    def document_sample_path(self, document_sample, temp_file_path):
+        with codecs.open(temp_file_path, 'w', encoding=u'utf-8') as file:
+            file.write(self.render_node(document_sample))
+        return temp_file_path
+
+    @pytest.fixture(params=['troff', 'nroff', 'groff'])
+    def roff_implementation(self, request):
+        return request.param
+
+    def test_compileable(self, roff_implementation, document_sample_path):
+        try:
+            process = subprocess.Popen(
+                [roff_implementation, '-man', document_sample_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except OSError:
+            pytest.skip(u'%s missing' % roff_implementation)
+        stdout, stderr = process.communicate()
+        assert process.returncode == 0
+        assert stderr == b''
+        assert stdout
+
+    def test_document(self):
+        document = ast.Document('<test>', title=u'foo')
+        self.match_node(document, u'.TH "foo" "1" "\d{2} \w+ \d{4}" ""\n')
+
+    def test_header(self):
+        header = ast.Header(u'foo', 1)
+        self.check_node(header, u'.SH "foo"\n')
+
+        header = ast.Header(u'foo', 2)
+        self.check_node(header, u'.SS "foo"\n')
+
+    def test_paragraph(self):
+        paragraph = ast.Paragraph(children=[ast.Text(u'foo')])
+        self.check_node(paragraph, u'.sp\nfoo\n')
+
+    def test_unordered_list(self):
+        list = ast.UnorderedList(children=[
+            ast.ListItem(children=[ast.Paragraph(children=[
+                ast.Text(u'foo')
+            ])]),
+            ast.ListItem(children=[
+                ast.Paragraph(children=[
+                    ast.Text(u'bar')
+                ]),
+                ast.Paragraph(children=[
+                    ast.Text(u'baz')
+                ])
+            ])
+        ])
+        self.check_node(
+            list,
+            u'.IP \(bu 2\n'
+            u'foo\n'
+            u'.IP \(bu 2\n'
+            u'bar\n'
+            u'.sp\n'
+            u'baz\n'
+            u'.in -2\n'
+        )
+
+    def test_ordered_list(self):
+        list = ast.OrderedList(children=[ast.ListItem(children=[
+            ast.Paragraph(children=[ast.Text(u'foo')])
+        ])])
+        self.check_node(
+            list,
+            u'.IP 1. 3\n'
+            u'foo\n'
+            u'.in -3\n'
+        )
+
+        list = ast.OrderedList()
+        for _ in range(10):
+            list.add_child(ast.ListItem(children=[
+                ast.Paragraph(children=[ast.Text(u'foo')])
+            ]))
+        self.check_node(
+            list,
+            u'.IP 1. 4\n'
+            u'foo\n'
+            u'.IP 2. 4\n'
+            u'foo\n'
+            u'.IP 3. 4\n'
+            u'foo\n'
+            u'.IP 4. 4\n'
+            u'foo\n'
+            u'.IP 5. 4\n'
+            u'foo\n'
+            u'.IP 6. 4\n'
+            u'foo\n'
+            u'.IP 7. 4\n'
+            u'foo\n'
+            u'.IP 8. 4\n'
+            u'foo\n'
+            u'.IP 9. 4\n'
+            u'foo\n'
+            u'.IP 10. 4\n'
+            u'foo\n'
+            u'.in -4\n'
+        )
+
+    def test_emphasis(self):
+        emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
+        self.check_node(emphasis, u'\\fIfoo\n\\fP\n')
+
+    def test_strong(self):
+        strong = ast.Strong(children=[ast.Text(u'foo')])
+        self.check_node(strong, u'\\fBfoo\n\\fP\n')

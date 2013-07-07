@@ -6,10 +6,13 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
-from itertools import count
+from datetime import datetime
+from itertools import count, repeat
 from contextlib import contextmanager
 
 import markupsafe
+
+from kurrent import ast
 
 
 class Writer(object):
@@ -226,3 +229,82 @@ class HTML5Writer(Writer):
     def write_Definition(self, node):
         # prevents NotImplementedError, we ignore Definitions
         pass
+
+
+class ManWriter(Writer):
+    @contextmanager
+    def write_Document(self, node):
+        self.write(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
+            title=u'' if node.title is None else node.title,
+            section=1,
+            date=datetime.now().strftime(u'%d %B %Y'),
+            author=u''
+        ))
+        self.newline()
+        yield True
+
+    def write_Header(self, node):
+        if node.level == 1:
+            macro = u'SH'
+        else:
+            macro = u'SS'
+        self.write(u'.{macro} "{text}"'.format(macro=macro, text=node.text))
+        self.newline()
+
+    @contextmanager
+    def write_Paragraph(self, node):
+        self.write(u'.sp')
+        self.newline()
+        yield True
+
+    def write_Text(self, node):
+        self.write(node.text)
+        self.newline()
+
+    def write_UnorderedList(self, node):
+        self._write_list(zip(repeat(u'\(bu'), repeat(1), node.children))
+
+    def write_OrderedList(self, node):
+        designators = [u'%d.' % i for i in range(1, len(node.children) + 1)]
+        designator_lengths = map(len, designators)
+        self._write_list(zip(designators, designator_lengths, node.children))
+
+    def _write_list(self, items):
+        items = list(items)
+        longest_designator = max(
+            designator_length for _, designator_length, _ in items
+        )
+        indentation = longest_designator + 1
+        for designator, _, item in items:
+            self._write_list_item(designator, indentation, item)
+        self.write(u'.in -%d' % indentation)
+        self.newline()
+
+    def _write_list_item(self, designator, indentation, node):
+        self.write(u'.IP {designator} {indentation}'.format(
+            designator=designator,
+            indentation=indentation
+        ))
+        self.newline()
+        if node.children:
+            # If we do an .sp as first item we get a newline directly after the
+            # bullet point so we skip that.
+            if isinstance(node.children[0], ast.Paragraph):
+                for grandchildren in node.children[0].children:
+                    self.write_node(grandchildren)
+            for child in node.children[1:]:
+                self.write_node(child)
+
+    @contextmanager
+    def write_Emphasis(self, node):
+        self.write(u'\\fI')
+        yield True
+        self.write(u'\\fP')
+        self.newline()
+
+    @contextmanager
+    def write_Strong(self, node):
+        self.write(u'\\fB')
+        yield True
+        self.write(u'\\fP')
+        self.newline()

@@ -15,7 +15,7 @@ from docopt import docopt
 
 from kurrent import __version__
 from kurrent.builders import SingleDocumentBuilder
-from kurrent.writers import HTML5Writer, KurrentWriter
+from kurrent.writers import HTML5Writer, KurrentWriter, ManWriter
 
 
 BUILDERS = {
@@ -23,7 +23,8 @@ BUILDERS = {
 }
 WRITERS = {
     'kurrent': (KurrentWriter, '.kr'),
-    'html5': (HTML5Writer, '.html')
+    'html5': (HTML5Writer, '.html'),
+    'man': (ManWriter, '.1')
 }
 
 
@@ -65,6 +66,7 @@ def build(argv):
     Writers:
       kurrent  Creates a kurrent file.
       html5    Creates an HTML5 file.
+      man      Creates a man page.
     """
     arguments = docopt(
         textwrap.dedent(build.__doc__),
