@@ -32,6 +32,13 @@ def test_default_reference_transformation():
     document = ast.Document('<test>', children=[
         ast.Reference(None, u'foo', u'foo')
     ])
+    context = {}
+    # check that the transformation does not fail if there is no definition in
+    # the context
+    DefaultReferenceTransformation(document, context).apply()
+    assert context == {}
+    assert document.children[0].definition is None
+
     definition = ast.Definition(None, u'foo', u'bar', [])
     context = {
         'definitions': {

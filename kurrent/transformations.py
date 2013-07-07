@@ -58,7 +58,8 @@ class DefaultReferenceTransformation(Transformation):
 
     def transform(self, node):
         definitions = self.context.get('definitions', {}).get(None, {})
-        node.definition = definitions[node.target]
+        if node.target in definitions:
+            node.definition = definitions[node.target]
 
 
 CORE_TRANSFORMATIONS = [
