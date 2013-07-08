@@ -97,3 +97,7 @@ class TransactionIterator(object):
                         raise
             raise self.default_failure_exc()
         return rv
+
+    def replace(self, item):
+        next(self._iterator)
+        self._iterator.push(item)

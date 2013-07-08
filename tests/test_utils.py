@@ -102,3 +102,10 @@ class TestTransactionIterator(IteratorTest):
         assert i.lookahead(silent=False) == [1]
         with pytest.raises(StopIteration):
             i.lookahead(n=2, silent=False)
+
+    def test_replace(self):
+        i = TransactionIterator([1])
+        i.replace(2)
+        assert next(i) == 2
+        with pytest.raises(StopIteration):
+            next(i)
