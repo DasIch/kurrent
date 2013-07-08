@@ -60,7 +60,6 @@ class TransactionIterator(object):
         self._iterator = pushable_iterator_cls(iterable)
 
         self.transactions = []
-        self.remaining = []
 
     def __iter__(self):
         return self
