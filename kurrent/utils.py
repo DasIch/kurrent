@@ -6,6 +6,9 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+from contextlib import contextmanager
+from itertools import islice
+
 from ._compat import implements_iterator
 
 
@@ -29,3 +32,44 @@ class PushableIterator(object):
     def push_many(self, items):
         for item in items:
             self.push(item)
+
+
+class TransactionFailure(Exception):
+    pass
+
+
+@implements_iterator
+class TransactionIterator(object):
+    def __init__(self, iterable, pushable_iterator_cls=PushableIterator):
+        self._iterator = pushable_iterator_cls(iterable)
+
+        self.transactions = []
+        self.remaining = []
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        rv = next(self._iterator)
+        if self.transactions:
+            self.transactions[-1].append(rv)
+        return rv
+
+    @contextmanager
+    def transaction(self, failure_exc=TransactionFailure, clean=None):
+        self.transactions.append([])
+        try:
+            yield
+        except failure_exc:
+            for item in reversed(self.transactions.pop()):
+                if clean is not None:
+                    item = clean(item)
+                self._iterator.push(item)
+        else:
+            self.transactions.pop()
+
+    def lookahead(self, n=1):
+        with self.transaction():
+            rv = list(islice(self, n))
+            raise TransactionFailure()
+        return rv
