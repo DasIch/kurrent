@@ -10,9 +10,10 @@ import io
 import re
 import codecs
 from itertools import groupby
+from contextlib import contextmanager
 
 from . import ast
-from .utils import PushableIterator, TransactionIterator
+from .utils import TransactionIterator
 from ._compat import implements_iterator, text_type, PY2, iteritems
 
 
@@ -178,8 +179,14 @@ class Line(text_type):
         return NotImplemented
 
 
+class BadPath(BaseException):
+    pass
+
+
 @implements_iterator
-class LineIterator(PushableIterator):
+class LineIterator(TransactionIterator):
+    default_failure_exc = BadPath
+
     def __init__(self, lines, lineno=0, columnno=1):
         super(LineIterator, self).__init__(lines)
         self.lineno = lineno
@@ -200,19 +207,24 @@ class LineIterator(PushableIterator):
         self.lineno += 1
         return Line(line.rstrip(u'\r\n'), self.lineno, self.columnno)
 
-    def push(self, line):
-        self.lineno -= 1
-        super(LineIterator, self).push(line)
+    @contextmanager
+    def transaction(self, failure_exc=None, clean=None):
+        old_position = self.lineno, self.columnno
+        with super(LineIterator, self).transaction(failure_exc=failure_exc, clean=clean) as transaction:
+            try:
+                yield transaction
+            finally:
+                if not transaction.committed:
+                    self.lineno, self.columnno = old_position
 
     def until(self, condition):
         def inner():
             while True:
-                line = next(self)
+                line = self.lookahead(silent=False)[0]
                 if condition(line):
-                    self.push(line)
                     break
                 else:
-                    yield line
+                    yield next(self)
         return self.__class__(inner(), self.lineno, self.columnno)
 
     def exhaust_until(self, condition):
@@ -227,11 +239,11 @@ class LineIterator(PushableIterator):
                 line = next(self)
                 if not line:
                     self.exhaust_until(lambda line: line.strip())
-                    line = next(self)
+                    line = self.lookahead()[0]
                     if line.startswith(u' '):
+                        next(self)
                         lines.append(u'')
                     else:
-                        self.push(line)
                         break
             except StopIteration:
                 break
@@ -244,10 +256,9 @@ class LineIterator(PushableIterator):
     def unindented(self, spaces=None):
         if spaces is None:
             try:
-                line = next(self)
+                line = self.lookahead(silent=False)[0]
             except StopIteration:
                 return []
-            self.push(line)
             spaces = len(line) - len(line.lstrip())
         def inner():
             for line in self:
@@ -257,10 +268,6 @@ class LineIterator(PushableIterator):
                     line = line[spaces:]
                 yield line
         return self.__class__(inner(), self.lineno, self.columnno + spaces)
-
-
-class BadPath(BaseException):
-    pass
 
 
 class DocumentError(Exception):
@@ -501,17 +508,22 @@ class Parser(object):
     def _parse_list(self, node_cls, match, strip, lines):
         rv = node_cls()
         lineiter = LineIterator(lines)
-        for line in lineiter:
+        while True:
+            try:
+                line = lineiter.lookahead(silent=False)[0]
+            except StopIteration:
+                break
             if not match(line):
                 raise BadPath()
             stripped = strip(line)
             indentation_level = len(line) - len(stripped)
-            lineiter.push(u' ' * indentation_level + stripped)
+            lineiter.replace(u' ' * indentation_level + stripped)
             rv.add_child(
                 ast.ListItem([
                     self.parse_block(list(block))
-                    for block in
-                    lineiter.until(match).unindented(indentation_level).blockwise()
+                    for block in lineiter.until(match)
+                                         .unindented(indentation_level)
+                                         .blockwise()
                 ])
             )
         return rv
