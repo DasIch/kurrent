@@ -55,6 +55,8 @@ class Transaction(object):
 
 @implements_iterator
 class TransactionIterator(object):
+    default_failure_exc = TransactionFailure
+
     def __init__(self, iterable, pushable_iterator_cls=PushableIterator):
         self._iterator = pushable_iterator_cls(iterable)
 
@@ -71,7 +73,9 @@ class TransactionIterator(object):
         return rv
 
     @contextmanager
-    def transaction(self, failure_exc=TransactionFailure, clean=None):
+    def transaction(self, failure_exc=None, clean=None):
+        if failure_exc is None:
+            failure_exc = self.default_failure_exc
         transaction = Transaction()
         self.transactions.append(transaction)
         try:
@@ -85,5 +89,5 @@ class TransactionIterator(object):
     def lookahead(self, n=1):
         with self.transaction():
             rv = list(islice(self, n))
-            raise TransactionFailure()
+            raise self.default_failure_exc()
         return rv
