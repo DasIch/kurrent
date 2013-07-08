@@ -312,28 +312,22 @@ class Parser(object):
         return ast.Document(
             self.filename,
             children=[
-                self.parse_block(list(block)) for block in self.lines.blockwise()
+                self.parse_block(block) for block in self.lines.blockwise()
             ]
         )
 
     def parse_block(self, lines):
-        if len(lines) == 1:
-            line = lines[0]
-            if line.startswith(u'#'):
-                return self.parse_header(line)
-        if lines[0].startswith(u'-'):
-            try:
-                return self.parse_unordered_list(lines)
-            except BadPath:
-                pass
-        if _ordered_list_item_re.match(lines[0]):
-            try:
-                return self.parse_ordered_list(lines)
-            except BadPath:
-                pass
-        if _definition_re.match(lines[0]):
-            return self.parse_definition(lines)
-        return self.parse_paragraph(lines)
+        parsers = [
+            self.parse_header,
+            self.parse_unordered_list,
+            self.parse_ordered_list,
+            self.parse_definition,
+            self.parse_paragraph
+        ]
+        for parser in parsers:
+            with lines.transaction():
+                return parser(lines)
+        assert False, u'all parsers failed, this should not happen'
 
     def parse_paragraph(self, lines):
         return ast.Paragraph(children=self.parse_inline(lines))
@@ -481,8 +475,14 @@ class Parser(object):
         return ast.Reference(None, target, target, definition=definition,
                              start=start, end=end_lexeme.end)
 
-    def parse_header(self, line):
+    def parse_header(self, lines):
+        lines = list(lines)
+        if len(lines) > 1:
+            raise BadPath()
+        line = lines[0]
         match = _header_re.match(line)
+        if match is None:
+            raise BadPath()
         level_indicator = match.group(1)
         text = match.group(2)
         return ast.Header(text, len(level_indicator), line.start, line.end)
@@ -520,7 +520,7 @@ class Parser(object):
             lineiter.replace(u' ' * indentation_level + stripped)
             rv.add_child(
                 ast.ListItem([
-                    self.parse_block(list(block))
+                    self.parse_block(block)
                     for block in lineiter.until(match)
                                          .unindented(indentation_level)
                                          .blockwise()
@@ -529,7 +529,10 @@ class Parser(object):
         return rv
 
     def parse_definition(self, lines):
+        lines = list(lines)
         match = _definition_re.match(lines[0])
+        if match is None:
+            raise BadPath()
         bracket = match.group(1)
         signature = match.group(2)
         match = _definition_bracket_re.match(bracket)
