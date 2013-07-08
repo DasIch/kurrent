@@ -9,10 +9,10 @@
 import io
 import re
 import codecs
-from itertools import groupby, islice
+from itertools import groupby
 
 from . import ast
-from .utils import PushableIterator
+from .utils import PushableIterator, TransactionIterator
 from ._compat import implements_iterator, text_type, PY2, iteritems
 
 
@@ -332,7 +332,7 @@ class Parser(object):
         return ast.Paragraph(children=self.parse_inline(lines))
 
     def parse_inline(self, lines):
-        inline_tokens = PushableIterator(InlineTokenizer(lines))
+        inline_tokens = TransactionIterator(InlineTokenizer(lines))
         return self._parse_inline(inline_tokens)
 
     def _parse_inline(self, inline_tokens):
@@ -398,8 +398,7 @@ class Parser(object):
         # [foo][bar|baz](spam) => None ][ None |  None ]( None )
         # [foo][bar](baz)      => None ][ None ]( None )
         #                              !       !       !
-        lookahead = list(islice(tokens, 6))
-        tokens.push_many(reversed(lookahead))
+        lookahead = tokens.lookahead(n=6)
         if len(lookahead) == 6:
             identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
         elif len(lookahead) == 4:
