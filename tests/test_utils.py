@@ -45,14 +45,22 @@ class TestTransactionIterator(IteratorTest):
 
     def test_transaction(self):
         i = TransactionIterator([1, 2])
-        with i.transaction():
+        with i.transaction() as transaction:
+            assert transaction.items == []
             assert next(i) == 1
+            assert transaction.items == [1]
+            assert not transaction.committed
+        assert transaction.committed
         assert next(i) == 2
 
         i = TransactionIterator([1, 2])
-        with i.transaction():
+        with i.transaction() as transaction:
+            assert transaction.items == []
             assert next(i) == 1
+            assert transaction.items == [1]
+            assert not transaction.committed
             raise TransactionFailure()
+        assert not transaction.committed
         assert next(i) == 1
 
     def test_transaction_with_failure_exc(self):

@@ -38,6 +38,21 @@ class TransactionFailure(Exception):
     pass
 
 
+class Transaction(object):
+    def __init__(self):
+        self.items = []
+        self.committed = False
+
+    def record(self, item):
+        self.items.append(item)
+
+    def rollback(self, pushable_iterator, clean=None):
+        for item in reversed(self.items):
+            if clean is not None:
+                item = clean(item)
+            pushable_iterator.push(item)
+
+
 @implements_iterator
 class TransactionIterator(object):
     def __init__(self, iterable, pushable_iterator_cls=PushableIterator):
@@ -52,21 +67,20 @@ class TransactionIterator(object):
     def __next__(self):
         rv = next(self._iterator)
         if self.transactions:
-            self.transactions[-1].append(rv)
+            self.transactions[-1].record(rv)
         return rv
 
     @contextmanager
     def transaction(self, failure_exc=TransactionFailure, clean=None):
-        self.transactions.append([])
+        transaction = Transaction()
+        self.transactions.append(transaction)
         try:
-            yield
+            yield transaction
         except failure_exc:
-            for item in reversed(self.transactions.pop()):
-                if clean is not None:
-                    item = clean(item)
-                self._iterator.push(item)
+            transaction.rollback(self._iterator, clean=clean)
         else:
-            self.transactions.pop()
+            transaction.committed = True
+        assert self.transactions.pop() is transaction
 
     def lookahead(self, n=1):
         with self.transaction():
