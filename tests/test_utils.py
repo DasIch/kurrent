@@ -96,3 +96,9 @@ class TestTransactionIterator(IteratorTest):
         i = TransactionIterator([1, 2])
         assert i.lookahead(n=2) == [1, 2]
         assert i.lookahead(n=3) == [1, 2]
+
+    def test_lookahead_with_silent(self):
+        i = TransactionIterator([1])
+        assert i.lookahead(silent=False) == [1]
+        with pytest.raises(StopIteration):
+            i.lookahead(n=2, silent=False)

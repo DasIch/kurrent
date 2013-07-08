@@ -7,7 +7,6 @@
     :license: BSD, see LICENSE.rst for details
 """
 from contextlib import contextmanager
-from itertools import islice
 
 from ._compat import implements_iterator
 
@@ -86,8 +85,16 @@ class TransactionIterator(object):
             transaction.committed = True
         assert self.transactions.pop() is transaction
 
-    def lookahead(self, n=1):
+    def lookahead(self, n=1, silent=True):
         with self.transaction():
-            rv = list(islice(self, n))
+            rv = []
+            for _ in range(n):
+                try:
+                    rv.append(next(self))
+                except StopIteration:
+                    if silent:
+                        break
+                    else:
+                        raise
             raise self.default_failure_exc()
         return rv
