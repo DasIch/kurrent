@@ -318,6 +318,14 @@ class TestReference(object):
         assert r.type == u'foo'
         assert r.target == r.text == u'bar'
 
+    def test_only_with_type_missing_closing_bracket(self):
+        document = Parser.from_string(u'[foo|bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert p.children[0].text == u'[foo|bar'
+
     def test_only_with_inline_definition(self):
         document = Parser.from_string(u'[foo](bar)').parse()
         assert len(document.children) == 1
