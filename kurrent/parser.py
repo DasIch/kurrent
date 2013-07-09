@@ -418,7 +418,6 @@ class Parser(object):
             raise BadPath()
         start = lexeme.start
         lookahead = tokens.lookahead(n=6)
-        print lookahead
         if len(lookahead) == 6:
             identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
         elif len(lookahead) == 4:
