@@ -337,27 +337,36 @@ class Parser(object):
         return self._parse_inline(inline_tokens)
 
     def _parse_inline(self, inline_tokens):
+        parsers = [self.parse_strong, self.parse_emphasis, self.parse_reference]
         rv = []
-        for lexeme, mark in inline_tokens:
+        while True:
+            try:
+                lexeme, mark = next(inline_tokens)
+            except StopIteration:
+                break
             if mark is None:
                 if rv and isinstance(rv[-1], ast.Text):
                     rv[-1].text += lexeme
                     rv[-1].end = lexeme.end
                 else:
                     rv.append(ast.Text(lexeme, lexeme.start, lexeme.end))
-            elif mark == u'**':
-                rv.append(self.parse_strong(inline_tokens, lexeme.start))
-            elif mark == u'*':
-                rv.append(self.parse_emphasis(inline_tokens, lexeme.start))
-            elif mark == u'[':
-                rv.append(self.parse_reference(inline_tokens, lexeme.start))
             else:
-                raise NotImplementedError(lexeme, mark)
+                inline_tokens.push((lexeme, mark))
+                for parser in parsers:
+                    with inline_tokens.transaction(failure_exc=BadPath) as transaction:
+                        rv.append(parser(inline_tokens))
+                    if transaction.committed:
+                        break
+                else:
+                    raise NotImplementedError(lexeme, mark)
         return rv
 
-    def parse_strong(self, tokens, start):
+    def parse_strong(self, tokens):
+        lexeme, mark = next(tokens)
+        if mark != u'**':
+            raise BadPath()
         rv = ast.Strong()
-        rv.start = start
+        rv.start = lexeme.start
         for lexeme, mark in tokens:
             if mark == u'**':
                 rv.end = lexeme.end
@@ -372,9 +381,12 @@ class Parser(object):
                 raise NotImplementedError(lexeme, mark)
         return rv
 
-    def parse_emphasis(self, tokens, start):
+    def parse_emphasis(self, tokens):
+        lexeme, mark = next(tokens)
+        if mark != u'*':
+            raise BadPath()
         rv = ast.Emphasis()
-        rv.start = start
+        rv.start = lexeme.start
         for lexeme, mark in tokens:
             if mark == u'*':
                 rv.end = lexeme.end
@@ -389,7 +401,7 @@ class Parser(object):
                 raise NotImplementedError(lexeme, mark)
         return rv
 
-    def parse_reference(self, tokens, start):
+    def parse_reference(self, tokens):
         # [foo]                => None ]
         # [foo|bar]            => None |  None ]
         # [foo](bar)           => None ]( None )
@@ -399,6 +411,10 @@ class Parser(object):
         # [foo][bar|baz](spam) => None ][ None |  None ]( None )
         # [foo][bar](baz)      => None ][ None ]( None )
         #                              !       !       !
+        lexeme, mark = next(tokens)
+        if mark != u'[':
+            raise BadPath()
+        start = lexeme.start
         lookahead = tokens.lookahead(n=6)
         if len(lookahead) == 6:
             identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
