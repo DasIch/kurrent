@@ -180,6 +180,12 @@ class Line(text_type):
             return Line(rv, self.lineno, self.columnno)
         return NotImplemented
 
+    def __getitem__(self, index):
+        rv = super(Line, self).__getitem__(index)
+        if isinstance(index, int) and index >= 0:
+            return Line(rv, self.lineno, self.columnno + index)
+        return rv
+
 
 class BadPath(BaseException):
     pass
@@ -420,9 +426,9 @@ class Parser(object):
         lookahead = tokens.lookahead(n=6)
         if len(lookahead) == 6:
             identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
-        elif len(lookahead) == 4:
+        elif len(lookahead) >= 4:
             identifier = lookahead[1][1], lookahead[3][1]
-        elif len(lookahead) == 2:
+        elif len(lookahead) >= 2:
             identifier = lookahead[1][1],
         else:
             raise BadPath()
@@ -433,7 +439,10 @@ class Parser(object):
         elif identifier[:2] == (u'|', u']('):
             return self.parse_reference_type_definition(tokens, start)
         elif identifier[0] == u'](':
-            return self.parse_reference_definition(tokens, start)
+            try:
+                return self.parse_reference_definition(tokens, start)
+            except BadPath:
+                return self.parse_reference_simple(tokens, start)
         elif identifier[0] == u'][':
             text, mark = next(tokens)
             assert mark is None
@@ -450,7 +459,7 @@ class Parser(object):
                 raise NotImplementedError(identifier)
             ref.text = text
             return ref
-        raise NotImplementedError(identifier)
+        raise BadPath()
 
     def parse_reference_simple(self, tokens, start):
         target, mark = next(tokens)
@@ -487,11 +496,18 @@ class Parser(object):
     def parse_reference_definition(self, tokens, start):
         target, mark = next(tokens)
         assert mark is None
-        assert next(tokens)[1] == u']('
-        definition, mark = next(tokens)
-        assert mark is None
-        end_lexeme, mark = next(tokens)
-        assert mark == u')'
+        definition_start = next(tokens)
+        assert definition_start[1] == u']('
+        with tokens.transaction(failure_exc=StopIteration) as transaction:
+            definition, mark = next(tokens)
+            assert mark is None
+            end_lexeme, mark = next(tokens)
+            assert mark == u')'
+        if not transaction.committed:
+            tokens.push((definition_start[0][1], None))
+            tokens.push((definition_start[0][0], u']'))
+            tokens.push((target, None))
+            raise BadPath()
         return ast.Reference(None, target, target, definition=definition,
                              start=start, end=end_lexeme.end)
 

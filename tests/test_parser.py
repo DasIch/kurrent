@@ -338,6 +338,18 @@ class TestReference(object):
         assert r.target == r.text == u'foo'
         assert r.definition == u'bar'
 
+    def test_only_with_inline_definition_missing_closing_paren(self):
+        document = Parser.from_string(u'[foo](bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == r.text == u'foo'
+        assert r.definition is None
+
     def test_only_with_type_and_inline_definition(self):
         document = Parser.from_string(u'[foo|bar](baz)').parse()
         assert len(document.children) == 1

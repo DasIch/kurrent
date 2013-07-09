@@ -74,6 +74,8 @@ class TransactionIterator(object):
     def __next__(self):
         if self.remaining:
             rv = self.remaining.pop()
+        elif self.transactions and self.transactions[-1].remaining:
+            rv = self.transactions[-1].remaining.pop()
         else:
             rv = next(self._iterator)
         if self.transactions:
