@@ -110,18 +110,20 @@ class InlineTokenizer(object):
     def __iter__(self):
         first = True
         end = -1
-        for line in self.lines:
-            if first:
-                first = False
-            else:
-                yield Line(u' ', line.lineno - 1, end), None
-            for mark, group in groupby(self.tokenize(line), lambda part: part[1]):
-                lexeme, mark = next(group)
-                for continuing_lexeme, _ in group:
-                    lexeme += continuing_lexeme
-                yield lexeme, mark
-                end = lexeme.columnno
-        assert self.state_stack == [None]
+        with self.lines.transaction():
+            for line in self.lines:
+                if first:
+                    first = False
+                else:
+                    yield Line(u' ', line.lineno - 1, end), None
+                for mark, group in groupby(self.tokenize(line), lambda part: part[1]):
+                    lexeme, mark = next(group)
+                    for continuing_lexeme, _ in group:
+                        lexeme += continuing_lexeme
+                    yield lexeme, mark
+                    end = lexeme.columnno
+            if self.state_stack != [None]:
+                raise BadPath()
 
     def tokenize(self, line):
         columnno = text_columnno = 0
@@ -358,7 +360,7 @@ class Parser(object):
                     if transaction.committed:
                         break
                 else:
-                    raise NotImplementedError(lexeme, mark)
+                    inline_tokens.push((next(inline_tokens)[0], None))
         return rv
 
     def parse_strong(self, tokens):
@@ -416,12 +418,15 @@ class Parser(object):
             raise BadPath()
         start = lexeme.start
         lookahead = tokens.lookahead(n=6)
+        print lookahead
         if len(lookahead) == 6:
             identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
         elif len(lookahead) == 4:
             identifier = lookahead[1][1], lookahead[3][1]
-        else:
+        elif len(lookahead) == 2:
             identifier = lookahead[1][1],
+        else:
+            raise BadPath()
         if identifier[0] == u']':
             return self.parse_reference_simple(tokens, start)
         elif identifier[:2] == (u'|', u']'):
