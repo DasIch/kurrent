@@ -103,9 +103,19 @@ class TestTransactionIterator(IteratorTest):
         with pytest.raises(StopIteration):
             i.lookahead(n=2, silent=False)
 
-    def test_replace(self):
-        i = TransactionIterator([1])
-        i.replace(2)
-        assert next(i) == 2
+    def test_push(self):
+        i = TransactionIterator([])
+        i.push(1)
+        assert next(i) == 1
+
+        i = TransactionIterator([])
+        with i.transaction():
+            i.push(1)
+        assert next(i) == 1
+
+        i = TransactionIterator([])
+        with i.transaction():
+            i.push(1)
+            raise TransactionFailure()
         with pytest.raises(StopIteration):
             next(i)

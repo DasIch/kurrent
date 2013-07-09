@@ -40,10 +40,16 @@ class TransactionFailure(Exception):
 class Transaction(object):
     def __init__(self):
         self.items = []
+        self.remaining = []
         self.committed = False
 
     def record(self, item):
         self.items.append(item)
+
+    def commit(self, pushable_iterator):
+        for item in reversed(self.remaining):
+            pushable_iterator.push(item)
+        self.committed = True
 
     def rollback(self, pushable_iterator, clean=None):
         for item in reversed(self.items):
@@ -60,12 +66,16 @@ class TransactionIterator(object):
         self._iterator = pushable_iterator_cls(iterable)
 
         self.transactions = []
+        self.remaining = []
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        rv = next(self._iterator)
+        if self.remaining:
+            rv = self.remaining.pop()
+        else:
+            rv = next(self._iterator)
         if self.transactions:
             self.transactions[-1].record(rv)
         return rv
@@ -81,7 +91,7 @@ class TransactionIterator(object):
         except failure_exc:
             transaction.rollback(self._iterator, clean=clean)
         else:
-            transaction.committed = True
+            transaction.commit(self._iterator)
         assert self.transactions.pop() is transaction
 
     def lookahead(self, n=1, silent=True):
@@ -98,6 +108,8 @@ class TransactionIterator(object):
             raise self.default_failure_exc()
         return rv
 
-    def replace(self, item):
-        next(self._iterator)
-        self._iterator.push(item)
+    def push(self, item):
+        if self.transactions:
+            self.transactions[-1].remaining.append(item)
+        else:
+            self.remaining.append(item)

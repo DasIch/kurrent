@@ -510,14 +510,14 @@ class Parser(object):
         lineiter = LineIterator(lines)
         while True:
             try:
-                line = lineiter.lookahead(silent=False)[0]
+                line = next(lineiter)
             except StopIteration:
                 break
             if not match(line):
                 raise BadPath()
             stripped = strip(line)
             indentation_level = len(line) - len(stripped)
-            lineiter.replace(u' ' * indentation_level + stripped)
+            lineiter.push(u' ' * indentation_level + stripped)
             rv.add_child(
                 ast.ListItem([
                     self.parse_block(block)
