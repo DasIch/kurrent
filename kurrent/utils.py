@@ -92,7 +92,8 @@ class TransactionIterator(object):
             transaction.rollback(self._iterator, clean=clean)
         else:
             transaction.commit(self._iterator)
-        assert self.transactions.pop() is transaction
+        finally:
+            assert self.transactions.pop() is transaction
 
     def lookahead(self, n=1, silent=True):
         with self.transaction():

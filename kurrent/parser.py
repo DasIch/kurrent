@@ -545,8 +545,8 @@ class Parser(object):
         return rv
 
     def parse_definition(self, lines):
-        lines = list(lines)
-        match = _definition_re.match(lines[0])
+        line = next(lines)
+        match = _definition_re.match(line)
         if match is None:
             raise BadPath()
         bracket = match.group(1)
@@ -557,5 +557,5 @@ class Parser(object):
             source = match.group(1)
         else:
             type, source = match.groups()
-        body = list(LineIterator(lines[1:]).unindented())
+        body = list(lines.unindented())
         return ast.Definition(type, source, signature, body)
