@@ -481,6 +481,48 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.definition is None
 
+    def test_only_with_text_missing_bracket(self):
+        document = Parser.from_string(u'[foo][bar').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'[bar'
+
+    def test_only_with_text_missing_target(self):
+        document = Parser.from_string(u'[foo][]').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'[]'
+
+    def test_only_with_text_missing_target_bracket(self):
+        document = Parser.from_string(u'[foo][').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type is None
+        assert r.target == r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'['
+
     def test_only_with_text_and_type(self):
         document = Parser.from_string(u'[foo][bar|baz]').parse()
         assert len(document.children) == 1

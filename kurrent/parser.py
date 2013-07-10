@@ -496,6 +496,11 @@ class Parser(object):
             tokens.expect([u']('])
             definition = next(tokens)[0]
             end = next(tokens)[0]
+        elif tokens.match([None, u'][']):
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+            tokens.push((end[1], None))
+            end = end[0]
         else:
             raise BadPath()
         if text is None:
