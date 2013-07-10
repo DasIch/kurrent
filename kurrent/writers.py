@@ -340,3 +340,18 @@ class ManWriter(Writer):
         self.write(u'\\fB')
         yield True
         self.write(u'\\fP')
+
+    def write_BlockQuote(self, node):
+        with self.hanging_indent(u'> ', 2):
+            if node.children:
+                # If we do an .sp as first item we get a newline directly after
+                # the angle bracket so we skip that.
+                if isinstance(node.children[0], ast.Paragraph):
+                    for grandchildren in node.children[0].children:
+                        self.write_node(grandchildren)
+                    self.newline()
+                    children = node.children[1:]
+                else:
+                    children = node.children
+                for child in children:
+                    self.write_node(child)

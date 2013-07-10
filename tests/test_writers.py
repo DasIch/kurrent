@@ -367,3 +367,17 @@ class TestManWriter(WriterTest):
 
         p = ast.Paragraph(children=[strong, ast.Text(u'bar')])
         self.check_node(p, u'.sp\n\\fBfoo\\fPbar')
+
+    def test_block_quote(self):
+        b = ast.BlockQuote(children=[
+            ast.Paragraph(children=[
+                ast.Text(u'foo')
+            ])
+        ])
+        self.check_node(b,
+            u'.RS 0\n'
+            u'.IP >  2\n'
+            u'foo\n'
+            u'.in -2\n'
+            u'.RE'
+        )
