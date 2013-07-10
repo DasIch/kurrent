@@ -178,6 +178,13 @@ class KurrentWriter(Writer):
             self.write_lines(node.body)
         self.write_block_newline()
 
+    @contextmanager
+    def write_BlockQuote(self, node):
+        self.write(u'> ')
+        with self.indent(u'  '):
+            yield True
+        # block newline is emitted by last quoted block
+
 
 class HTML5Writer(Writer):
     def write_Text(self, node):

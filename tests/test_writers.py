@@ -126,6 +126,26 @@ class TestKurrentWriter(WriterTest):
         definition = ast.Definition(None, u'foo', u'', [u'hello', u'world'])
         self.check_node(definition, u'[foo]:\n  hello\n  world')
 
+    def test_block_quote(self):
+        block_quote = ast.BlockQuote(children=[
+            ast.Paragraph(children=[
+                ast.Text(u'foo')
+            ])
+        ])
+        self.check_node(block_quote, u'> foo')
+
+        block_quote.add_child(ast.BlockQuote(children=[
+            ast.Paragraph(children=[
+                ast.Text(u'bar')
+            ])
+        ]))
+        self.check_node(
+            block_quote,
+            u'> foo\n'
+            u'\n'
+            u'  > bar'
+        )
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer
