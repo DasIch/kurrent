@@ -56,29 +56,36 @@ def escaped(regex):
     return (u'\\\\' + regex, None)
 
 
-class InlineTokenizer(object):
+class BadPath(BaseException):
+    pass
+
+
+class InlineTokenizer(TransactionIterator):
+    default_failure_exc = BadPath
+
     states = {
         None: [
             (u'(\*\*)', u'**'),
             (u'(\*)', u'*'),
             escaped(u'(\*)'),
             escaped(u'(\[)'),
-            (u'(\[)', u'[', 'push', 'reference'),
+            (u'(\[)', u'[', 'push_state', 'reference'),
             escaped(u'(\])')
         ],
         'reference': [
             (u'(\]\()', u']('),
             (u'(\]\[)', u']['),
-            (u'(\])', u']', 'pop'),
+            (u'(\])', u']', 'pop_state'),
             escaped(u'(\])'),
             (u'(\|)', u'|'),
             escaped(u'(\|)'),
-            (u'(\))', u')', 'pop'),
+            (u'(\))', u')', 'pop_state'),
             escaped(u'(\))')
         ]
     }
 
     def __init__(self, lines):
+        super(InlineTokenizer, self).__init__(self._iter())
         self.lines = lines
 
         self.states = self._compile_states(self.states)
@@ -107,7 +114,7 @@ class InlineTokenizer(object):
                 compiled_state.append((re.compile(regex), label, method, args))
         return rv
 
-    def __iter__(self):
+    def _iter(self):
         first = True
         end = -1
         with self.lines.transaction():
@@ -116,7 +123,7 @@ class InlineTokenizer(object):
                     first = False
                 else:
                     yield Line(u' ', line.lineno - 1, end), None
-                for mark, group in groupby(self.tokenize(line), lambda part: part[1]):
+                for mark, group in groupby(self._tokenize(line), lambda part: part[1]):
                     lexeme, mark = next(group)
                     for continuing_lexeme, _ in group:
                         lexeme += continuing_lexeme
@@ -125,7 +132,7 @@ class InlineTokenizer(object):
             if self.state_stack != [None]:
                 raise BadPath()
 
-    def tokenize(self, line):
+    def _tokenize(self, line):
         columnno = text_columnno = 0
         text = []
         while line[columnno:]:
@@ -152,10 +159,10 @@ class InlineTokenizer(object):
             yield Line(u''.join(text), line.lineno, text_columnno + 1), None
             text = []
 
-    def push(self, state):
+    def push_state(self, state):
         self.state_stack.append(state)
 
-    def pop(self):
+    def pop_state(self):
         self.state_stack.pop()
 
 
@@ -185,10 +192,6 @@ class Line(text_type):
         if isinstance(index, int) and index >= 0:
             return Line(rv, self.lineno, self.columnno + index)
         return rv
-
-
-class BadPath(BaseException):
-    pass
 
 
 @implements_iterator
@@ -341,8 +344,7 @@ class Parser(object):
         return ast.Paragraph(children=self.parse_inline(lines))
 
     def parse_inline(self, lines):
-        inline_tokens = TransactionIterator(InlineTokenizer(lines))
-        return self._parse_inline(inline_tokens)
+        return self._parse_inline(InlineTokenizer(lines))
 
     def _parse_inline(self, inline_tokens):
         parsers = [self.parse_strong, self.parse_emphasis, self.parse_reference]
