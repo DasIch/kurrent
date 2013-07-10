@@ -165,6 +165,11 @@ class InlineTokenizer(TransactionIterator):
     def pop_state(self):
         self.state_stack.pop()
 
+    def expect(self, marks):
+        for mark in marks:
+            if next(self)[1] != mark:
+                raise BadPath()
+
 
 class Line(text_type):
     def __new__(cls, string, lineno, columnno):
@@ -448,7 +453,7 @@ class Parser(object):
         elif identifier[0] == u'][':
             text, mark = next(tokens)
             assert mark is None
-            assert next(tokens)[1] == u']['
+            tokens.expect([u']['])
             if identifier[1:] == (u']', ):
                 ref = self.parse_reference_simple(tokens, start)
             elif identifier[1:] == (u'|', u']'):
@@ -474,7 +479,7 @@ class Parser(object):
     def parse_reference_type(self, tokens, start):
         type, mark = next(tokens)
         assert mark is None
-        assert next(tokens)[1] == u'|'
+        tokens.expect([u'|'])
         target, mark = next(tokens)
         assert mark is None
         end_lexeme, mark = next(tokens)
@@ -484,10 +489,10 @@ class Parser(object):
     def parse_reference_type_definition(self, tokens, start):
         type, mark = next(tokens)
         assert mark is None
-        assert next(tokens)[1] == u'|'
+        tokens.expect([u'|'])
         target, mark = next(tokens)
         assert mark is None
-        assert next(tokens)[1] == u']('
+        tokens.expect([u']('])
         definition, mark = next(tokens)
         assert mark is None
         end_lexeme, mark = next(tokens)
