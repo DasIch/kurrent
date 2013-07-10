@@ -362,8 +362,14 @@ class TestManWriter(WriterTest):
 
     def test_emphasis(self):
         emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
-        self.check_node(emphasis, u'\\fIfoo\n\\fP')
+        self.check_node(emphasis, u'\\fIfoo\\fP')
+
+        p = ast.Paragraph(children=[emphasis, ast.Text(u'bar')])
+        self.check_node(p, u'.sp\n\\fIfoo\\fPbar')
 
     def test_strong(self):
         strong = ast.Strong(children=[ast.Text(u'foo')])
-        self.check_node(strong, u'\\fBfoo\n\\fP')
+        self.check_node(strong, u'\\fBfoo\\fP')
+
+        p = ast.Paragraph(children=[strong, ast.Text(u'bar')])
+        self.check_node(p, u'.sp\n\\fBfoo\\fPbar')

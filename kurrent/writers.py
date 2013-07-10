@@ -273,9 +273,10 @@ class ManWriter(Writer):
     def write_Paragraph(self, node):
         self.write_line(u'.sp')
         yield True
+        self.newline()
 
     def write_Text(self, node):
-        self.write_line(node.text)
+        self.write(node.text)
 
     def write_UnorderedList(self, node):
         self._write_list(zip(repeat(u'\(bu'), repeat(1), node.children))
@@ -306,6 +307,7 @@ class ManWriter(Writer):
             if isinstance(node.children[0], ast.Paragraph):
                 for grandchildren in node.children[0].children:
                     self.write_node(grandchildren)
+                self.newline()
             for child in node.children[1:]:
                 self.write_node(child)
 
@@ -313,10 +315,10 @@ class ManWriter(Writer):
     def write_Emphasis(self, node):
         self.write(u'\\fI')
         yield True
-        self.write_line(u'\\fP')
+        self.write(u'\\fP')
 
     @contextmanager
     def write_Strong(self, node):
         self.write(u'\\fB')
         yield True
-        self.write_line(u'\\fP')
+        self.write(u'\\fP')
