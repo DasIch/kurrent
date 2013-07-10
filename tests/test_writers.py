@@ -310,13 +310,18 @@ class TestManWriter(WriterTest):
         ])
         self.check_node(
             list,
+            u'.RS 0\n'
             u'.IP \(bu 2\n'
             u'foo\n'
+            u'.in -2\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP \(bu 2\n'
             u'bar\n'
             u'.sp\n'
             u'baz\n'
-            u'.in -2'
+            u'.in -2\n'
+            u'.RE'
         )
 
     def test_ordered_list(self):
@@ -325,9 +330,11 @@ class TestManWriter(WriterTest):
         ])])
         self.check_node(
             list,
+            u'.RS 0\n'
             u'.IP 1. 3\n'
             u'foo\n'
-            u'.in -3'
+            u'.in -3\n'
+            u'.RE'
         )
 
         list = ast.OrderedList()
@@ -337,27 +344,56 @@ class TestManWriter(WriterTest):
             ]))
         self.check_node(
             list,
+            u'.RS 0\n'
             u'.IP 1. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 2. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 3. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 4. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 5. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 6. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 7. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 8. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 9. 4\n'
             u'foo\n'
+            u'.in -4\n'
+            u'.RE\n'
+            u'.RS 0\n'
             u'.IP 10. 4\n'
             u'foo\n'
-            u'.in -4'
+            u'.in -4\n'
+            u'.RE'
         )
 
     def test_emphasis(self):

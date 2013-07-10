@@ -252,6 +252,11 @@ class HTML5Writer(Writer):
 
 
 class ManWriter(Writer):
+    def __init__(self, *args, **kwargs):
+        super(ManWriter, self).__init__(*args, **kwargs)
+
+        self.indented = False
+
     @contextmanager
     def write_Document(self, node):
         self.write_line(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
@@ -294,22 +299,35 @@ class ManWriter(Writer):
         indentation = longest_designator + 1
         for designator, _, item in items:
             self._write_list_item(designator, indentation, item)
-        self.write_line(u'.in -%d' % indentation)
 
-    def _write_list_item(self, designator, indentation, node):
-        self.write_line(u'.IP {designator} {indentation}'.format(
-            designator=designator,
+    @contextmanager
+    def hanging_indent(self, string, indentation):
+        old_indented = self.indented
+        if self.indented:
+            self.write_line(u'.RS')
+        else:
+            self.write_line(u'.RS 0')
+            self.indented = True
+        self.write_line(u'.IP {string} {indentation}'.format(
+            string=string,
             indentation=indentation
         ))
-        if node.children:
-            # If we do an .sp as first item we get a newline directly after the
-            # bullet point so we skip that.
-            if isinstance(node.children[0], ast.Paragraph):
-                for grandchildren in node.children[0].children:
-                    self.write_node(grandchildren)
-                self.newline()
-            for child in node.children[1:]:
-                self.write_node(child)
+        yield
+        self.write_line(u'.in -%d' % indentation)
+        self.write_line(u'.RE')
+        self.indented = old_indented
+
+    def _write_list_item(self, designator, indentation, node):
+        with self.hanging_indent(designator, indentation):
+            if node.children:
+                # If we do an .sp as first item we get a newline directly after
+                # the bullet point so we skip that.
+                if isinstance(node.children[0], ast.Paragraph):
+                    for grandchildren in node.children[0].children:
+                        self.write_node(grandchildren)
+                    self.newline()
+                for child in node.children[1:]:
+                    self.write_node(child)
 
     @contextmanager
     def write_Emphasis(self, node):
