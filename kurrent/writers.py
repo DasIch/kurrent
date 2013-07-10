@@ -230,6 +230,12 @@ class HTML5Writer(Writer):
         # prevents NotImplementedError, we ignore Definitions
         pass
 
+    @contextmanager
+    def write_BlockQuote(self, node):
+        self.write(u'<blockquote>')
+        yield True
+        self.write(u'</blockquote>')
+
 
 class ManWriter(Writer):
     @contextmanager

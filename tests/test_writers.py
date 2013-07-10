@@ -193,6 +193,14 @@ class TestHTML5Writer(WriterTest):
         definition = ast.Definition(None, u'foo', u'bar', [])
         self.check_node(definition, u'')
 
+    def test_write_block_quote(self):
+        block_quote = ast.BlockQuote(children=[
+            ast.Paragraph(children=[
+                ast.Text(u'foo')
+            ])
+        ])
+        self.check_node(block_quote, u'<blockquote><p>foo</p></blockquote>')
+
 
 class TestManWriter(WriterTest):
     writer_cls = ManWriter
