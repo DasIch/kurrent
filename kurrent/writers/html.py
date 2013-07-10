@@ -8,14 +8,14 @@
 """
 from contextlib import contextmanager
 
-import markupsafe
+from markupsafe import escape
 
 from .base import Writer
 
 
 class HTML5Writer(Writer):
     def write_Text(self, node):
-        self.write(markupsafe.escape(node.text))
+        self.write(escape(node.text))
 
     @contextmanager
     def write_Paragraph(self, node):
@@ -25,7 +25,7 @@ class HTML5Writer(Writer):
 
     def write_Header(self, node):
         self.write(u'<h%d>' % node.level)
-        self.write(markupsafe.escape(node.text))
+        self.write(escape(node.text))
         self.write(u'</h%d>' % node.level)
 
     @contextmanager
@@ -64,7 +64,7 @@ class HTML5Writer(Writer):
         self.write(u'<a href="')
         self.write(node.definition)
         self.write(u'">')
-        self.write(markupsafe.escape(node.text))
+        self.write(escape(node.text))
         self.write(u'</a>')
 
     def write_Definition(self, node):
