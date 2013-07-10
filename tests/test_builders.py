@@ -28,9 +28,7 @@ def read_file(path, encoding='utf-8'):
     (KurrentWriter, textwrap.dedent(u"""\
         # Test
 
-        This is a test.
-
-    """)),
+        This is a test.""")),
     (HTML5Writer,
      u'<!doctype html><title>Test</title><h1>Test</h1><p>This is a test.</p>'
     )

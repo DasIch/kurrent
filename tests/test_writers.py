@@ -44,13 +44,11 @@ class TestKurrentWriter(WriterTest):
         ])
         self.check_node(document, u'Hello\n'
                                   u'\n'
-                                  u'World\n'
-                                  u'\n')
+                                  u'World')
 
     def test_write_header(self):
         self.check_node(ast.Header(u'Hello World', 1),
-                        u'# Hello World\n'
-                        u'\n')
+                        u'# Hello World')
 
     def test_write_unordered_list(self):
         list = ast.UnorderedList([
@@ -58,16 +56,14 @@ class TestKurrentWriter(WriterTest):
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
         self.check_node(list, u'- foo\n'
-                              u'- bar\n'
-                              u'\n')
+                              u'- bar')
 
         list.add_child(ast.UnorderedList([
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'- foo\n'
                               u'- bar\n'
-                              u'- - baz\n'
-                              u'\n')
+                              u'- - baz')
 
     def test_write_ordered_list(self):
         list = ast.OrderedList([
@@ -75,16 +71,14 @@ class TestKurrentWriter(WriterTest):
             ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
         self.check_node(list, u'1. foo\n'
-                              u'2. bar\n'
-                              u'\n')
+                              u'2. bar')
 
         list.add_child(ast.OrderedList([
             ast.ListItem([ast.Paragraph(children=[ast.Text(u'baz')])])
         ]))
         self.check_node(list, u'1. foo\n'
                               u'2. bar\n'
-                              u'3. 1. baz\n'
-                              u'\n')
+                              u'3. 1. baz')
 
     def test_emphasis(self):
         emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
@@ -118,19 +112,19 @@ class TestKurrentWriter(WriterTest):
 
     def test_definition(self):
         definition = ast.Definition(None, u'foo', u'', [])
-        self.check_node(definition, u'[foo]:\n\n')
+        self.check_node(definition, u'[foo]:')
 
         definition = ast.Definition(None, u'foo', u'bar', [])
-        self.check_node(definition, u'[foo]: bar\n\n')
+        self.check_node(definition, u'[foo]: bar')
 
         definition = ast.Definition(u'foo', u'bar', u'', [])
-        self.check_node(definition, u'[foo|bar]:\n\n')
+        self.check_node(definition, u'[foo|bar]:')
 
         definition = ast.Definition(u'foo', u'bar', u'baz', [])
-        self.check_node(definition, u'[foo|bar]: baz\n\n')
+        self.check_node(definition, u'[foo|bar]: baz')
 
         definition = ast.Definition(None, u'foo', u'', [u'hello', u'world'])
-        self.check_node(definition, u'[foo]:\n  hello\n  world\n\n')
+        self.check_node(definition, u'[foo]:\n  hello\n  world')
 
 
 class TestHTML5Writer(WriterTest):
@@ -267,18 +261,18 @@ class TestManWriter(WriterTest):
 
     def test_document(self):
         document = ast.Document('<test>', metadata={'title': u'foo'})
-        self.match_node(document, u'.TH "foo" "1" "\d{2} \w+ \d{4}" ""\n')
+        self.match_node(document, u'.TH "foo" "1" "\d{2} \w+ \d{4}" ""')
 
     def test_header(self):
         header = ast.Header(u'foo', 1)
-        self.check_node(header, u'.SH "foo"\n')
+        self.check_node(header, u'.SH "foo"')
 
         header = ast.Header(u'foo', 2)
-        self.check_node(header, u'.SS "foo"\n')
+        self.check_node(header, u'.SS "foo"')
 
     def test_paragraph(self):
         paragraph = ast.Paragraph(children=[ast.Text(u'foo')])
-        self.check_node(paragraph, u'.sp\nfoo\n')
+        self.check_node(paragraph, u'.sp\nfoo')
 
     def test_unordered_list(self):
         list = ast.UnorderedList(children=[
@@ -302,7 +296,7 @@ class TestManWriter(WriterTest):
             u'bar\n'
             u'.sp\n'
             u'baz\n'
-            u'.in -2\n'
+            u'.in -2'
         )
 
     def test_ordered_list(self):
@@ -313,7 +307,7 @@ class TestManWriter(WriterTest):
             list,
             u'.IP 1. 3\n'
             u'foo\n'
-            u'.in -3\n'
+            u'.in -3'
         )
 
         list = ast.OrderedList()
@@ -343,13 +337,13 @@ class TestManWriter(WriterTest):
             u'foo\n'
             u'.IP 10. 4\n'
             u'foo\n'
-            u'.in -4\n'
+            u'.in -4'
         )
 
     def test_emphasis(self):
         emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
-        self.check_node(emphasis, u'\\fIfoo\n\\fP\n')
+        self.check_node(emphasis, u'\\fIfoo\n\\fP')
 
     def test_strong(self):
         strong = ast.Strong(children=[ast.Text(u'foo')])
-        self.check_node(strong, u'\\fBfoo\n\\fP\n')
+        self.check_node(strong, u'\\fBfoo\n\\fP')

@@ -19,8 +19,8 @@ class Writer(object):
     def __init__(self, stream):
         self.stream = stream
 
-        self.new_indent_stack = []
         self.indent_stack = []
+        self.newlines = 0
 
     def __enter__(self):
         return self
@@ -31,18 +31,28 @@ class Writer(object):
 
     @contextmanager
     def indent(self, string):
-        self.new_indent_stack.append(string)
+        self.indent_stack.append(string)
         yield
         assert self.indent_stack.pop() == string
 
     def write(self, string):
-        self.stream.write(u''.join(self.indent_stack))
+        if self.newlines:
+            for _ in range(self.newlines):
+                self.stream.write(u'\n')
+            self.stream.write(u''.join(self.indent_stack))
+            self.newlines = 0
         self.stream.write(string)
 
     def newline(self):
-        self.indent_stack.extend(self.new_indent_stack)
-        del self.new_indent_stack[:]
-        self.stream.write(u'\n')
+        self.newlines += 1
+
+    def write_line(self, string):
+        self.write(string)
+        self.newline()
+
+    def write_lines(self, strings):
+        for string in strings:
+            self.write_line(string)
 
     def write_node(self, node):
         try:
@@ -93,8 +103,7 @@ class KurrentWriter(Writer):
         self.write_block_newline()
 
     def write_Header(self, node):
-        self.write(u'%s %s' % (u'#' * node.level, node.text))
-        self.newline()
+        self.write_line(u'%s %s' % (u'#' * node.level, node.text))
         self.write_block_newline()
 
     def write_Text(self, node):
@@ -166,9 +175,7 @@ class KurrentWriter(Writer):
             self.write(node.signature)
         with self.indent(u'  '):
             self.newline()
-            for line in node.body:
-                self.write(line)
-                self.newline()
+            self.write_lines(node.body)
         self.write_block_newline()
 
 
@@ -240,13 +247,12 @@ class HTML5Writer(Writer):
 class ManWriter(Writer):
     @contextmanager
     def write_Document(self, node):
-        self.write(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
+        self.write_line(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
             title=node.metadata.get('title', u''),
             section=1,
             date=datetime.now().strftime(u'%d %B %Y'),
             author=u''
         ))
-        self.newline()
         yield True
 
     def write_Header(self, node):
@@ -254,18 +260,15 @@ class ManWriter(Writer):
             macro = u'SH'
         else:
             macro = u'SS'
-        self.write(u'.{macro} "{text}"'.format(macro=macro, text=node.text))
-        self.newline()
+        self.write_line(u'.{macro} "{text}"'.format(macro=macro, text=node.text))
 
     @contextmanager
     def write_Paragraph(self, node):
-        self.write(u'.sp')
-        self.newline()
+        self.write_line(u'.sp')
         yield True
 
     def write_Text(self, node):
-        self.write(node.text)
-        self.newline()
+        self.write_line(node.text)
 
     def write_UnorderedList(self, node):
         self._write_list(zip(repeat(u'\(bu'), repeat(1), node.children))
@@ -283,15 +286,13 @@ class ManWriter(Writer):
         indentation = longest_designator + 1
         for designator, _, item in items:
             self._write_list_item(designator, indentation, item)
-        self.write(u'.in -%d' % indentation)
-        self.newline()
+        self.write_line(u'.in -%d' % indentation)
 
     def _write_list_item(self, designator, indentation, node):
-        self.write(u'.IP {designator} {indentation}'.format(
+        self.write_line(u'.IP {designator} {indentation}'.format(
             designator=designator,
             indentation=indentation
         ))
-        self.newline()
         if node.children:
             # If we do an .sp as first item we get a newline directly after the
             # bullet point so we skip that.
@@ -305,12 +306,10 @@ class ManWriter(Writer):
     def write_Emphasis(self, node):
         self.write(u'\\fI')
         yield True
-        self.write(u'\\fP')
-        self.newline()
+        self.write_line(u'\\fP')
 
     @contextmanager
     def write_Strong(self, node):
         self.write(u'\\fB')
         yield True
-        self.write(u'\\fP')
-        self.newline()
+        self.write_line(u'\\fP')
