@@ -496,6 +496,15 @@ class Parser(object):
             tokens.expect([u']('])
             definition = next(tokens)[0]
             end = next(tokens)[0]
+        elif tokens.match([None, u'][', None, u'|', None, u'](']):
+            text = next(tokens)[0]
+            tokens.expect([u']['])
+            type = next(tokens)[0]
+            tokens.expect([u'|'])
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+            tokens.push((end[1], None))
+            end = end[0]
         elif tokens.match([None, u'][', None, u'](']):
             text = next(tokens)[0]
             tokens.expect([u']['])

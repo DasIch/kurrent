@@ -649,6 +649,51 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.definition == u'spam'
 
+    def test_only_with_text_and_type_and_definition_missing_paren(self):
+        document = Parser.from_string(u'[foo][bar|baz](spam').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'bar'
+        assert r.target == u'baz'
+        assert r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'(spam'
+
+    def test_only_with_text_and_type_and_definition_missing_definition(self):
+        document = Parser.from_string(u'[foo][bar|baz]()').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'bar'
+        assert r.target == u'baz'
+        assert r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'()'
+
+    def test_only_with_text_and_type_and_definition_missing_definition_paren(self):
+        document = Parser.from_string(u'[foo][bar|baz](').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 2
+        assert isinstance(p.children[0], ast.Reference)
+        r = p.children[0]
+        assert r.type == u'bar'
+        assert r.target == u'baz'
+        assert r.text == u'foo'
+        assert r.definition is None
+        assert isinstance(p.children[1], ast.Text)
+        assert p.children[1].text == u'('
+
     def test_escaping(self):
         document = Parser.from_string(u'\[foo\]').parse()
         assert len(document.children) == 1
