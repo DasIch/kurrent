@@ -185,8 +185,8 @@ class TestHTML5Writer(WriterTest):
         )
         self.check_node(document, u'<!doctype html><title></title><p>foo</p>')
 
-        document = ast.Document('<test>', metadata={'title': u'foo'})
-        self.check_node(document, u'<!doctype html><title>foo</title>')
+        document = ast.Document('<test>', metadata={'title': u'foo<'})
+        self.check_node(document, u'<!doctype html><title>foo&lt;</title>')
 
     def test_write_emphasis(self):
         emphasis = ast.Emphasis(children=[ast.Text(u'foo')])

@@ -44,7 +44,7 @@ class HTML5Writer(Writer):
     def write_Document(self, node):
         self.write(u'<!doctype html>')
         self.write(u'<title>%s</title>' % (
-            node.metadata.get('title', u'')
+            escape(node.metadata.get('title', u''))
         ))
         yield True
 
