@@ -304,6 +304,24 @@ class TestStrong(InlineMarkupTest):
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'**foo**'
 
+    def test_missing_closing_double_asterisk(self):
+        document = Parser.from_string(u'**foo').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'**foo'
+
+    def test_missing_opening_double_asterisk(self):
+        document = Parser.from_string(u'foo**').parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo**'
+
 
 class TestReference(object):
     def test_only(self):
