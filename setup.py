@@ -24,7 +24,7 @@ setup(
     author='Daniel Neuhäuser',
     author_email='ich@danielneuhaeuser.de',
     url='https://github.com/DasIch/kurrent',
-    packages=['kurrent'],
+    packages=['kurrent', 'kurrent.writers'],
     include_package_data=True,
     entry_points={
         'console_scripts': [
