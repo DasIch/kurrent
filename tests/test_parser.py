@@ -1075,3 +1075,71 @@ class TestDefinition(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'blubb'
+
+class TestQuote(object):
+    def test_simple(self):
+        document = Parser.from_string(
+            u'> foo'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.BlockQuote)
+        b = document.children[0]
+        assert len(b.children) == 1
+        assert isinstance(b.children[0], ast.Paragraph)
+        p = b.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
+
+    def test_multi_line(self):
+        document = Parser.from_string(
+            u'> foo\n'
+            u'  bar'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.BlockQuote)
+        b = document.children[0]
+        assert len(b.children) == 1
+        assert isinstance(b.children[0], ast.Paragraph)
+        p = b.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo bar'
+
+    def test_missing_indent(self):
+        document = Parser.from_string(
+            u'> foo\n'
+            u'bar'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.Paragraph)
+        p = document.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'> foo bar'
+
+    def test_nesting(self):
+        document = Parser.from_string(
+            u'> > foo\n'
+            u'\n'
+            u'  bar'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.BlockQuote)
+        outer_quote = document.children[0]
+        assert len(outer_quote.children) == 2
+
+        assert isinstance(outer_quote.children[0], ast.BlockQuote)
+        inner_quote = outer_quote.children[0]
+        assert len(inner_quote.children) == 1
+        assert isinstance(inner_quote.children[0], ast.Paragraph)
+        p = inner_quote.children[0]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'foo'
+
+        assert isinstance(outer_quote.children[1], ast.Paragraph)
+        p = outer_quote.children[1]
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'bar'

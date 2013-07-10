@@ -165,3 +165,7 @@ class OrderedList(ParentNode):
 
 class ListItem(ParentNode):
     pass
+
+
+class BlockQuote(ParentNode):
+    pass

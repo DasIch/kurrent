@@ -344,6 +344,7 @@ class Parser(object):
             self.parse_unordered_list,
             self.parse_ordered_list,
             self.parse_definition,
+            self.parse_quote,
             self.parse_paragraph
         ]
         for parser in parsers:
@@ -598,3 +599,16 @@ class Parser(object):
             type, source = match.groups()
         body = list(lines.unindented())
         return ast.Definition(type, source, signature, body)
+
+    def parse_quote(self, lines):
+        rv = ast.BlockQuote()
+        line = next(lines)
+        if not line.startswith(u'>'):
+            raise BadPath()
+        rv.start = line.start
+        stripped = line[1:].lstrip()
+        indentation = len(line) - len(stripped)
+        lines.push(u' ' * indentation + stripped)
+        for block in lines.unindented(indentation).blockwise():
+            rv.add_child(self.parse_block(block))
+        return rv
