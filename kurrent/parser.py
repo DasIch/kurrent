@@ -420,6 +420,8 @@ class Parser(object):
                     rv.add_child(ast.Text(lexeme, lexeme.start, lexeme.end))
             else:
                 raise NotImplementedError(lexeme, mark)
+        else:
+            raise BadPath()
         return rv
 
     def parse_reference(self, tokens):
