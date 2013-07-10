@@ -170,6 +170,12 @@ class InlineTokenizer(TransactionIterator):
             if next(self)[1] != mark:
                 raise BadPath()
 
+    def match(self, marks):
+        tokens = self.lookahead(n=len(marks))
+        return len(tokens) == len(marks) and all(
+            token[1] == mark for token, mark in zip(tokens, marks)
+        )
+
 
 class Line(text_type):
     def __new__(cls, string, lineno, columnno):
@@ -426,97 +432,71 @@ class Parser(object):
         # [foo][bar|baz](spam) => None ][ None |  None ]( None )
         # [foo][bar](baz)      => None ][ None ]( None )
         #                              !       !       !
-        lexeme, mark = next(tokens)
+        start, mark = next(tokens)
         if mark != u'[':
             raise BadPath()
-        start = lexeme.start
-        lookahead = tokens.lookahead(n=6)
-        if len(lookahead) == 6:
-            identifier = lookahead[1][1], lookahead[3][1], lookahead[5][1]
-        elif len(lookahead) >= 4:
-            identifier = lookahead[1][1], lookahead[3][1]
-        elif len(lookahead) >= 2:
-            identifier = lookahead[1][1],
+        type = text = definition = None
+        if tokens.match([None, u']']):
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'|', None, u']']):
+            type = next(tokens)[0]
+            tokens.expect([u'|'])
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'](', None, u')']):
+            target = next(tokens)[0]
+            tokens.expect([u']('])
+            definition = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'|', None, u'](', None, u')']):
+            type = next(tokens)[0]
+            tokens.expect([u'|'])
+            target = next(tokens)[0]
+            tokens.expect([u']('])
+            definition = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'](']):
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+            tokens.push((end[1], None))
+            end = end[0]
+        elif tokens.match([None, u'][', None, u']']):
+            text = next(tokens)[0]
+            tokens.expect([u']['])
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'][', None, u'|', None, u']']):
+            text = next(tokens)[0]
+            tokens.expect([u']['])
+            type = next(tokens)[0]
+            tokens.expect([u'|'])
+            target = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'][', None, u'|', None, u'](', None, u')']):
+            text = next(tokens)[0]
+            tokens.expect([u']['])
+            type = next(tokens)[0]
+            tokens.expect([u'|'])
+            target = next(tokens)[0]
+            tokens.expect([u']('])
+            definition = next(tokens)[0]
+            end = next(tokens)[0]
+        elif tokens.match([None, u'][', None, u'](', None, u')']):
+            text = next(tokens)[0]
+            tokens.expect([u']['])
+            target = next(tokens)[0]
+            tokens.expect([u']('])
+            definition = next(tokens)[0]
+            end = next(tokens)[0]
         else:
             raise BadPath()
-        if identifier[0] == u']':
-            return self.parse_reference_simple(tokens, start)
-        elif identifier[:2] == (u'|', u']'):
-            return self.parse_reference_type(tokens, start)
-        elif identifier[:2] == (u'|', u']('):
-            return self.parse_reference_type_definition(tokens, start)
-        elif identifier[0] == u'](':
-            try:
-                return self.parse_reference_definition(tokens, start)
-            except BadPath:
-                return self.parse_reference_simple(tokens, start)
-        elif identifier[0] == u'][':
-            text, mark = next(tokens)
-            assert mark is None
-            tokens.expect([u']['])
-            if identifier[1:] == (u']', ):
-                ref = self.parse_reference_simple(tokens, start)
-            elif identifier[1:] == (u'|', u']'):
-                ref = self.parse_reference_type(tokens, start)
-            elif identifier[1:] == (u'|', u']('):
-                ref = self.parse_reference_type_definition(tokens, start)
-            elif identifier[1:] == (u'](', u')'):
-                ref = self.parse_reference_definition(tokens, start)
-            else:
-                raise NotImplementedError(identifier)
-            ref.text = text
-            return ref
-        raise BadPath()
-
-    def parse_reference_simple(self, tokens, start):
-        target, mark = next(tokens)
-        assert mark is None
-        end_lexeme, mark = next(tokens)
-        assert mark == u']'
-        return ast.Reference(None, target, target, start=start,
-                             end=end_lexeme.end)
-
-    def parse_reference_type(self, tokens, start):
-        type, mark = next(tokens)
-        assert mark is None
-        tokens.expect([u'|'])
-        target, mark = next(tokens)
-        assert mark is None
-        end_lexeme, mark = next(tokens)
-        return ast.Reference(type, target, target, start=start,
-                             end=end_lexeme.end)
-
-    def parse_reference_type_definition(self, tokens, start):
-        type, mark = next(tokens)
-        assert mark is None
-        tokens.expect([u'|'])
-        target, mark = next(tokens)
-        assert mark is None
-        tokens.expect([u']('])
-        definition, mark = next(tokens)
-        assert mark is None
-        end_lexeme, mark = next(tokens)
-        assert mark == u')'
-        return ast.Reference(type, target, target, definition=definition,
-                             start=start, end=end_lexeme.end)
-
-    def parse_reference_definition(self, tokens, start):
-        target, mark = next(tokens)
-        assert mark is None
-        definition_start = next(tokens)
-        assert definition_start[1] == u']('
-        with tokens.transaction(failure_exc=StopIteration) as transaction:
-            definition, mark = next(tokens)
-            assert mark is None
-            end_lexeme, mark = next(tokens)
-            assert mark == u')'
-        if not transaction.committed:
-            tokens.push((definition_start[0][1], None))
-            tokens.push((definition_start[0][0], u']'))
-            tokens.push((target, None))
-            raise BadPath()
-        return ast.Reference(None, target, target, definition=definition,
-                             start=start, end=end_lexeme.end)
+        if text is None:
+            text = target
+        return ast.Reference(
+            type, target, text, definition=definition,
+            start=start.start, end=end.end
+        )
 
     def parse_header(self, lines):
         lines = list(lines)
