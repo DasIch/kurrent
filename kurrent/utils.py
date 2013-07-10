@@ -47,7 +47,7 @@ class Transaction(object):
         self.items.append(item)
 
     def commit(self, pushable_iterator):
-        for item in reversed(self.remaining):
+        for item, _ in reversed(self.remaining):
             pushable_iterator.push(item)
         self.committed = True
 
@@ -72,13 +72,14 @@ class TransactionIterator(object):
         return self
 
     def __next__(self):
+        pushed = False
         if self.remaining:
             rv = self.remaining.pop()
         elif self.transactions and self.transactions[-1].remaining:
-            rv = self.transactions[-1].remaining.pop()
+            rv, pushed = self.transactions[-1].remaining.pop()
         else:
             rv = next(self._iterator)
-        if self.transactions:
+        if self.transactions and not pushed:
             self.transactions[-1].record(rv)
         return rv
 
@@ -113,6 +114,6 @@ class TransactionIterator(object):
 
     def push(self, item):
         if self.transactions:
-            self.transactions[-1].remaining.append(item)
+            self.transactions[-1].remaining.append((item, True))
         else:
             self.remaining.append(item)

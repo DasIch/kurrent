@@ -119,3 +119,11 @@ class TestTransactionIterator(IteratorTest):
             raise TransactionFailure()
         with pytest.raises(StopIteration):
             next(i)
+
+        i = TransactionIterator([])
+        with i.transaction():
+            i.push(1)
+            assert next(i) == 1
+            raise TransactionFailure()
+        with pytest.raises(StopIteration):
+            next(i)
