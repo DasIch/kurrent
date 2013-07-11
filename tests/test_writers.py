@@ -413,3 +413,24 @@ class TestManWriter(WriterTest):
             u'foo\n'
             u'.RE'
         )
+
+        b = ast.BlockQuote(children=[
+            ast.OrderedList(children=[
+                ast.ListItem(children=[
+                    ast.Paragraph(children=[ast.Text(u'foo')])
+                ]),
+                ast.ListItem(children=[
+                    ast.Paragraph(children=[ast.Text(u'bar')])
+                ])
+            ])
+        ])
+        self.check_node(b,
+            u'.RS\n'
+            u'.IP "> 1. " 5\n'
+            u'foo\n'
+            u'.RS 2\n'
+            u'.IP "2. " 3\n'
+            u'bar\n'
+            u'.RE\n'
+            u'.RE'
+        )

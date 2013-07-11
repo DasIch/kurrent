@@ -80,6 +80,12 @@ class HangingIndentation(ParentNode):
         super(HangingIndentation, self).__init__(children=children)
 
 
+class Indentation(ParentNode):
+    def __init__(self, indentation, children=None):
+        super(Indentation, self).__init__(children=children)
+        self.indentation = indentation
+
+
 class Translator(object):
     def translate(self, node):
         return getattr(self, 'translate_%s' % node.__class__.__name__)(node)
@@ -153,18 +159,24 @@ translate = Translator().translate
 
 
 def fold(node):
-    if isinstance(node, Document):
+    if isinstance(node, (Document, Indentation)):
         for child in node.children:
             if isinstance(child, HangingIndentation):
-                node.nested = False
+                child.nested = False
     elif isinstance(node, HangingIndentation):
         if node.children:
             if isinstance(node.children[0], HangingIndentation):
-                child_indent = node.children[0]
+                child_indent = node.children.pop(0)
                 if node.id != child_indent.id:
                     node.designator += child_indent.designator
+                    node.children = (
+                        child_indent.children +
+                        [Indentation(
+                            node.indentation,
+                            node.children
+                        )]
+                    )
                     node.indentation += child_indent.indentation
-                    node.children = child_indent.children + node.children[1:]
             if isinstance(node.children[0], Paragraph):
                 node.children[0].transparent = True
     if hasattr(node, 'children'):
@@ -248,3 +260,9 @@ class ManWriter(Writer):
         yield True
         if node.nested:
             self.write_line(u'.RE')
+
+    @contextmanager
+    def write_Indentation(self, node):
+        self.write_line(u'.RS %d' % node.indentation)
+        yield True
+        self.write_line(u'.RE')
