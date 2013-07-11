@@ -6,9 +6,23 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+from io import StringIO
 from contextlib import contextmanager
 
 from ._compat import implements_iterator
+
+try:
+    from __pypy__.builders import UnicodeBuilder as StringBuilder
+except ImportError:
+    class StringBuilder(object):
+        def __init__(self, size=None):
+            self.stream = StringIO()
+
+        def append(self, string):
+            self.stream.write(string)
+
+        def build(self):
+            return self.stream.getvalue()
 
 
 @implements_iterator

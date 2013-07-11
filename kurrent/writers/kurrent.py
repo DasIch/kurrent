@@ -9,7 +9,19 @@
 from itertools import count
 from contextlib import contextmanager
 
+from ..utils import StringBuilder
 from .base import Writer
+
+
+def escape(string):
+    builder = StringBuilder(size=len(string))
+    for char in string:
+        builder.append({
+            u'*': u'\*',
+            u'[': u'\[',
+            u']': u'\]'
+        }.get(char, char))
+    return builder.build()
 
 
 class KurrentWriter(Writer):
@@ -40,7 +52,7 @@ class KurrentWriter(Writer):
         self.write_block_newline()
 
     def write_Text(self, node):
-        self.write(node.text)
+        self.write(escape(node.text))
 
     def write_UnorderedList(self, node):
         writer = self._write_list(node)

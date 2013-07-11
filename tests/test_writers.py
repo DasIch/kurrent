@@ -37,6 +37,11 @@ class WriterTest(object):
 class TestKurrentWriter(WriterTest):
     writer_cls = KurrentWriter
 
+    def test_write_text(self):
+        self.check_node(ast.Text(u'foo'), u'foo')
+        self.check_node(ast.Text(u'*'), u'\*')
+        self.check_node(ast.Text(u'[foo]'), u'\[foo\]')
+
     def test_write_paragraph(self):
         document = ast.Document('<test>', children=[
             ast.Paragraph(children=[ast.Text(u'Hello')]),
