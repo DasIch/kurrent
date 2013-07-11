@@ -158,12 +158,16 @@ class TestHTML5Writer(WriterTest):
     def test_write_paragraph(self):
         self.check_node(
             ast.Paragraph(children=[ast.Text(u'foo')]),
-            u'<p>foo</p>'
+            u'<p>\n'
+            u'  foo\n'
+            u'</p>'
         )
 
         self.check_node(
             ast.Paragraph(children=[ast.Text(u'<p>')]),
-            u'<p>&lt;p&gt;</p>'
+            u'<p>\n'
+            u'  &lt;p&gt;\n'
+            u'</p>'
         )
 
     def test_write_header(self):
@@ -181,17 +185,39 @@ class TestHTML5Writer(WriterTest):
             ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'foo')])]),
             ast.ListItem(children=[ast.Paragraph(children=[ast.Text(u'bar')])])
         ])
-        self.check_node(list, u'<ul><li><p>foo</p></li><li><p>bar</p></li></ul>')
+        self.check_node(list,
+            u'<ul>\n'
+            u'  <li>\n'
+            u'    <p>\n'
+            u'      foo\n'
+            u'    </p>\n'
+            u'  </li>\n'
+            u'  <li>\n'
+            u'    <p>\n'
+            u'      bar\n'
+            u'    </p>\n'
+            u'  </li>\n'
+            u'</ul>'
+        )
 
     def test_write_document(self):
         document = ast.Document(
             '<test>',
             children=[ast.Paragraph(children=[ast.Text(u'foo')])]
         )
-        self.check_node(document, u'<!doctype html><title></title><p>foo</p>')
+        self.check_node(document,
+            u'<!doctype html>\n'
+            u'<title></title>\n'
+            u'<p>\n'
+            u'  foo\n'
+            u'</p>'
+        )
 
         document = ast.Document('<test>', metadata={'title': u'foo<'})
-        self.check_node(document, u'<!doctype html><title>foo&lt;</title>')
+        self.check_node(document,
+            u'<!doctype html>\n'
+            u'<title>foo&lt;</title>'
+        )
 
     def test_write_emphasis(self):
         emphasis = ast.Emphasis(children=[ast.Text(u'foo')])
@@ -218,7 +244,13 @@ class TestHTML5Writer(WriterTest):
                 ast.Text(u'foo')
             ])
         ])
-        self.check_node(block_quote, u'<blockquote><p>foo</p></blockquote>')
+        self.check_node(block_quote,
+            u'<blockquote>\n'
+            u'  <p>\n'
+            u'    foo\n'
+            u'  </p>\n'
+            u'</blockquote>'
+        )
 
 
 class TestManWriter(WriterTest):

@@ -30,7 +30,12 @@ def read_file(path, encoding='utf-8'):
 
         This is a test.""")),
     (HTML5Writer,
-     u'<!doctype html><title>Test</title><h1>Test</h1><p>This is a test.</p>'
+     u'<!doctype html>\n'
+     u'<title>Test</title>\n'
+     u'<h1>Test</h1>\n'
+     u'<p>\n'
+     u'  This is a test.\n'
+     u'</p>'
     )
 ])
 def test_single_document_builder_test(temp_file_path, writer_cls, expected_content):
