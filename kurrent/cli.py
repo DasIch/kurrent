@@ -22,9 +22,9 @@ BUILDERS = {
     'single': SingleDocumentBuilder
 }
 WRITERS = {
-    'kurrent': (KurrentWriter, '.kr'),
-    'html5': (HTML5Writer, '.html'),
-    'man': (ManWriter, '.1')
+    'kurrent': KurrentWriter,
+    'html5': HTML5Writer,
+    'man': ManWriter
 }
 
 
@@ -84,7 +84,7 @@ def build(argv):
         except SystemExit:
             sys.exit(1)
     try:
-        writer, extension = WRITERS[arguments['<writer>']]
+        writer = WRITERS[arguments['<writer>']]
     except KeyError:
         print(
             u'Error: %r is not a known writer.\n' % arguments['<writer>'],
@@ -95,5 +95,4 @@ def build(argv):
         except SystemExit:
             sys.exit(1)
     for source in arguments['<sources>']:
-        target = os.path.splitext(source)[0] + extension
-        builder(source, target, writer).build()
+        builder(source, os.path.dirname(source), writer).build()

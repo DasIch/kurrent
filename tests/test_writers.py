@@ -37,6 +37,10 @@ class WriterTest(object):
 class TestKurrentWriter(WriterTest):
     writer_cls = KurrentWriter
 
+    def test_get_file_extensions(self):
+        document = ast.Document(u'<test>')
+        assert KurrentWriter.get_file_extension(document) == '.kr'
+
     def test_write_text(self):
         self.check_node(ast.Text(u'foo'), u'foo')
         self.check_node(ast.Text(u'*'), u'\*')
@@ -154,6 +158,10 @@ class TestKurrentWriter(WriterTest):
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer
+
+    def test_get_file_extension(self):
+        document = ast.Document('<test>')
+        assert HTML5Writer.get_file_extension(document) == '.html'
 
     def test_write_paragraph(self):
         self.check_node(
@@ -315,6 +323,16 @@ class TestManWriter(WriterTest):
         assert process.returncode == 0
         assert stderr == b''
         assert stdout
+
+    def test_get_file_extension(self):
+        document = ast.Document('<test>')
+        assert ManWriter.get_file_extension(document) == u'.1'
+
+        document.metadata['section'] = 1
+        assert ManWriter.get_file_extension(document) == u'.1'
+
+        document.metadata['section'] = 2
+        assert ManWriter.get_file_extension(document) == u'.2'
 
     def test_document(self):
         document = ast.Document('<test>', metadata={'title': u'foo'})

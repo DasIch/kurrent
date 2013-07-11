@@ -193,6 +193,10 @@ def compile(node):
 
 
 class ManWriter(Writer):
+    @classmethod
+    def get_file_extension(self, document):
+        return '.%d' % document.metadata.get('section', 1)
+
     def write_node(self, kurrent_node):
         if isinstance(kurrent_node, ManASTNode):
             man_nodes = kurrent_node

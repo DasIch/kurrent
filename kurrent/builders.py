@@ -6,6 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+import os
 import codecs
 
 from kurrent.parser import Parser
@@ -13,10 +14,16 @@ from kurrent.transformations import CORE_TRANSFORMATIONS
 
 
 class SingleDocumentBuilder(object):
-    def __init__(self, source_path, target_path, writer_cls):
+    def __init__(self, source_path, target_dir, writer_cls):
         self.source_path = source_path
-        self.target_path = target_path
+        self.target_dir = target_dir
         self.writer_cls = writer_cls
+
+    def get_target_path(self, document):
+        extension = self.writer_cls.get_file_extension(document)
+        return os.path.join(
+            self.target_dir,
+            os.path.splitext(os.path.basename(self.source_path))[0] + extension)
 
     def build(self):
         document = self.parse()
@@ -33,5 +40,5 @@ class SingleDocumentBuilder(object):
             transformation_cls(document, context).apply()
 
     def write(self, document):
-        with codecs.open(self.target_path, 'w', encoding='utf-8') as file:
+        with codecs.open(self.get_target_path(document), 'w', encoding='utf-8') as file:
             self.writer_cls(file).write_node(document)

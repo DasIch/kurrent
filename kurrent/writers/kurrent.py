@@ -25,6 +25,10 @@ def escape(string):
 
 
 class KurrentWriter(Writer):
+    @classmethod
+    def get_file_extension(self, document):
+        return '.kr'
+
     def __init__(self, stream):
         super(KurrentWriter, self).__init__(stream)
 

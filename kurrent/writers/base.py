@@ -10,6 +10,10 @@ from contextlib import contextmanager
 
 
 class Writer(object):
+    @classmethod
+    def get_file_extension(self, document):
+        raise NotImplementedError()
+
     def __init__(self, stream):
         self.stream = stream
 

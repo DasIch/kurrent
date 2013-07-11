@@ -33,6 +33,10 @@ def make_block_writer(tag, indent=True, follow_with_newline=False):
 
 
 class HTML5Writer(Writer):
+    @classmethod
+    def get_file_extension(self, document):
+        return '.html'
+
     def write_Text(self, node):
         self.write(escape(node.text))
 
