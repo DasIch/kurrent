@@ -45,11 +45,6 @@ class Document(ParentNode):
         self.date = date
         self.author = author
 
-    def add_child(self, node):
-        if isinstance(node, HangingIndentation):
-            node.nested = False
-        super(Document, self).add_child(node)
-
 
 class Section(ManASTNode):
     def __init__(self, title):
@@ -83,19 +78,6 @@ class HangingIndentation(ParentNode):
         self.indentation = indentation
         self.nested = nested
         super(HangingIndentation, self).__init__(children=children)
-
-    def add_child(self, node):
-        if not self.children:
-            if isinstance(node, Paragraph):
-                node.transparent = True
-                super(HangingIndentation, self).add_child(node)
-                return
-            elif isinstance(node, HangingIndentation) and self.id != node.id:
-                self.designator += node.designator
-                self.indentation += node.indentation
-                self.add_children(node.children)
-                return
-        super(HangingIndentation, self).add_child(node)
 
 
 class Translator(object):
@@ -169,8 +151,33 @@ class Translator(object):
 
 translate = Translator().translate
 
+
+def fold(node):
+    if isinstance(node, Document):
+        for child in node.children:
+            if isinstance(child, HangingIndentation):
+                node.nested = False
+    elif isinstance(node, HangingIndentation):
+        if node.children:
+            if isinstance(node.children[0], HangingIndentation):
+                child_indent = node.children[0]
+                if node.id != child_indent.id:
+                    node.designator += child_indent.designator
+                    node.indentation += child_indent.indentation
+                    node.children = child_indent.children + node.children[1:]
+            if isinstance(node.children[0], Paragraph):
+                node.children[0].transparent = True
+    if hasattr(node, 'children'):
+        for child in node.children:
+            fold(child)
+    return node
+
 def compile(node):
-    return translate(node)
+    nodes = translate(node)
+    if not hasattr(nodes, '__iter__'):
+        nodes = [nodes]
+    for node in nodes:
+        yield fold(node)
 
 
 class ManWriter(Writer):
