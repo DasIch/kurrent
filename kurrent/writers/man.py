@@ -7,91 +7,195 @@
     :license: BSD, see LICENSE.rst for details
 """
 from datetime import datetime
-from itertools import repeat
-
 from contextlib import contextmanager
 
-from .. import ast
 from .base import Writer
 
 
-class ManWriter(Writer):
-    def __init__(self, *args, **kwargs):
-        super(ManWriter, self).__init__(*args, **kwargs)
+class ManASTNode(object):
+    pass
 
-        self.indented = False
 
-    @contextmanager
-    def write_Document(self, node):
-        self.write_line(u'.TH "{title}" "{section}" "{date}" "{author}"'.format(
+class Text(ManASTNode):
+    def __init__(self, text):
+        self.text = text
+
+
+class ParentNode(ManASTNode):
+    def __init__(self, children=None):
+        self.children = []
+
+        if children is not None:
+            self.add_children(children)
+
+    def add_child(self, node):
+        self.children.append(node)
+
+    def add_children(self, nodes):
+        for node in nodes:
+            self.add_child(node)
+
+
+class Document(ParentNode):
+    def __init__(self, title=u'', section=u'', date=u'', author=u'',
+                 children=None):
+        super(Document, self).__init__(children=children)
+        self.title = title
+        self.section = section
+        self.date = date
+        self.author = author
+
+    def add_child(self, node):
+        if isinstance(node, HangingIndentation):
+            node.nested = False
+        super(Document, self).add_child(node)
+
+
+class Section(ManASTNode):
+    def __init__(self, title):
+        self.title = title
+
+
+class SubSection(ManASTNode):
+    def __init__(self, title):
+        self.title = title
+
+
+class Paragraph(ParentNode):
+    def __init__(self, transparent=False, children=None):
+        super(Paragraph, self).__init__(children=children)
+        self.transparent = transparent
+
+
+class Emphasis(ParentNode):
+    pass
+
+
+class Strong(ParentNode):
+    pass
+
+
+class HangingIndentation(ParentNode):
+    def __init__(self, id, designator=None, indentation=None, nested=True,
+                 children=None):
+        self.id = id
+        self.designator = designator
+        self.indentation = indentation
+        self.nested = nested
+        super(HangingIndentation, self).__init__(children=children)
+
+    def add_child(self, node):
+        if not self.children:
+            if isinstance(node, Paragraph):
+                node.transparent = True
+                super(HangingIndentation, self).add_child(node)
+                return
+            elif isinstance(node, HangingIndentation) and self.id != node.id:
+                self.designator += node.designator
+                self.indentation += node.indentation
+                self.add_children(node.children)
+                return
+        super(HangingIndentation, self).add_child(node)
+
+
+class Compiler(object):
+    def compile(self, node):
+        return getattr(self, 'compile_%s' % node.__class__.__name__)(node)
+
+    def compile_children(self, node):
+        rv = []
+        for child in node.children:
+            compiled = self.compile(child)
+            if hasattr(compiled, '__iter__'):
+                rv.extend(compiled)
+            else:
+                rv.append(compiled)
+        return rv
+
+    def compile_Document(self, node):
+        return Document(
             title=node.metadata.get('title', u''),
-            section=1,
+            section=node.metadata.get('section', 1),
             date=datetime.now().strftime(u'%d %B %Y'),
-            author=u''
-        ))
-        yield True
+            children=self.compile_children(node)
+        )
 
-    def write_Header(self, node):
+    def compile_Header(self, node):
         if node.level == 1:
-            macro = u'SH'
-        else:
-            macro = u'SS'
-        self.write_line(u'.{macro} "{text}"'.format(macro=macro, text=node.text))
+            return Section(node.text)
+        elif node.level == 2:
+            return SubSection(node.text)
+        assert False, node.level
 
-    @contextmanager
-    def write_Paragraph(self, node):
-        self.write_line(u'.sp')
-        yield True
-        self.newline()
+    def compile_Text(self, node):
+        return Text(node.text)
+
+    def compile_Emphasis(self, node):
+        return Emphasis(children=self.compile_children(node))
+
+    def compile_Strong(self, node):
+        return Strong(children=self.compile_children(node))
+
+    def compile_Paragraph(self, node):
+        return Paragraph(children=self.compile_children(node))
+
+    def compile_BlockQuote(self, node):
+        return HangingIndentation(
+            '>',
+            designator=u'> ',
+            indentation=2,
+            children=self.compile_children(node)
+        )
+
+    def compile_OrderedList(self, node):
+        indentation = len(u'%d. ' % len(node.children))
+        for index, item in enumerate(node.children, start=1):
+            yield HangingIndentation(
+                'ol',
+                designator=u'%d. ' % index,
+                indentation=indentation,
+                children=self.compile_children(item)
+            )
+
+    def compile_UnorderedList(self, node):
+        for item in node.children:
+            yield HangingIndentation(
+                'ul',
+                designator=u'\(bu ',
+                indentation=2,
+                children=self.compile_children(item)
+            )
+
+compile_kurrent_ast = Compiler().compile
+
+
+class ManWriter(Writer):
+    def write_node(self, kurrent_node):
+        if isinstance(kurrent_node, ManASTNode):
+            man_nodes = kurrent_node
+        elif hasattr(kurrent_node, '__iter__'):
+            man_nodes = kurrent_node
+        else:
+            man_nodes = compile_kurrent_ast(kurrent_node)
+        if not hasattr(man_nodes, '__iter__'):
+            man_nodes = [man_nodes]
+        for man_node in man_nodes:
+            method = getattr(self, 'write_' + man_node.__class__.__name__)
+            if hasattr(man_node, 'children'):
+                result = method(man_node)
+                if hasattr(result, '__enter__'):
+                    with result as write_children:
+                        if write_children:
+                            self.write_children(man_node)
+            else:
+                method(man_node)
+
+    def write_children(self, node):
+        for child in node.children:
+            self.write_node(child)
 
     def write_Text(self, node):
         self.write(node.text)
-
-    def write_UnorderedList(self, node):
-        self._write_list(zip(repeat(u'\(bu'), repeat(1), node.children))
-
-    def write_OrderedList(self, node):
-        designators = [u'%d.' % i for i in range(1, len(node.children) + 1)]
-        designator_lengths = map(len, designators)
-        self._write_list(zip(designators, designator_lengths, node.children))
-
-    def _write_list(self, items):
-        items = list(items)
-        longest_designator = max(
-            designator_length for _, designator_length, _ in items
-        )
-        indentation = longest_designator + 1
-        for designator, _, item in items:
-            self._write_list_item(designator, indentation, item)
-
-    @contextmanager
-    def hanging_indent(self, string, indentation):
-        old_indented = self.indented
-        if self.indented:
-            self.write_line(u'.RS')
-        else:
-            self.write_line(u'.RS 0')
-            self.indented = True
-        self.write_line(u'.IP {string} {indentation}'.format(
-            string=string,
-            indentation=indentation
-        ))
-        yield
-        self.write_line(u'.in -%d' % indentation)
-        self.write_line(u'.RE')
-        self.indented = old_indented
-
-    def _write_list_item(self, designator, indentation, node):
-        with self.hanging_indent(designator, indentation):
-            if node.children:
-                # If we do an .sp as first item we get a newline directly after
-                # the bullet point so we skip that.
-                if isinstance(node.children[0], ast.Paragraph):
-                    for grandchildren in node.children[0].children:
-                        self.write_node(grandchildren)
-                    self.newline()
-                for child in node.children[1:]:
-                    self.write_node(child)
 
     @contextmanager
     def write_Emphasis(self, node):
@@ -105,17 +209,31 @@ class ManWriter(Writer):
         yield True
         self.write(u'\\fP')
 
-    def write_BlockQuote(self, node):
-        with self.hanging_indent(u'> ', 2):
-            if node.children:
-                # If we do an .sp as first item we get a newline directly after
-                # the angle bracket so we skip that.
-                if isinstance(node.children[0], ast.Paragraph):
-                    for grandchildren in node.children[0].children:
-                        self.write_node(grandchildren)
-                    self.newline()
-                    children = node.children[1:]
-                else:
-                    children = node.children
-                for child in children:
-                    self.write_node(child)
+    @contextmanager
+    def write_Paragraph(self, node):
+        if not node.transparent:
+            self.write_line(u'.P')
+        yield True
+        self.newline()
+
+    def write_Section(self, node):
+        self.write_line(u'.SH "%s"' % node.title)
+
+    def write_SubSection(self, node):
+        self.write_line(u'.SS "%s"' % node.title)
+
+    @contextmanager
+    def write_Document(self, node):
+        self.write_line(u'.TH "%s" "%s" "%s" "%s"' % (
+            node.title, node.section, node.date, node.author
+        ))
+        yield True
+
+    @contextmanager
+    def write_HangingIndentation(self, node):
+        if node.nested:
+            self.write_line(u'.RS')
+        self.write_line(u'.IP "%s" %d' % (node.designator, node.indentation))
+        yield True
+        if node.nested:
+            self.write_line(u'.RE')

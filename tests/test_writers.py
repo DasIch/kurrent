@@ -329,7 +329,7 @@ class TestManWriter(WriterTest):
 
     def test_paragraph(self):
         paragraph = ast.Paragraph(children=[ast.Text(u'foo')])
-        self.check_node(paragraph, u'.sp\nfoo')
+        self.check_node(paragraph, u'.P\nfoo')
 
     def test_unordered_list(self):
         list = ast.UnorderedList(children=[
@@ -347,17 +347,15 @@ class TestManWriter(WriterTest):
         ])
         self.check_node(
             list,
-            u'.RS 0\n'
-            u'.IP \(bu 2\n'
+            u'.RS\n'
+            u'.IP "\(bu " 2\n'
             u'foo\n'
-            u'.in -2\n'
             u'.RE\n'
-            u'.RS 0\n'
-            u'.IP \(bu 2\n'
+            u'.RS\n'
+            u'.IP "\(bu " 2\n'
             u'bar\n'
-            u'.sp\n'
+            u'.P\n'
             u'baz\n'
-            u'.in -2\n'
             u'.RE'
         )
 
@@ -367,10 +365,9 @@ class TestManWriter(WriterTest):
         ])])
         self.check_node(
             list,
-            u'.RS 0\n'
-            u'.IP 1. 3\n'
+            u'.RS\n'
+            u'.IP "1. " 3\n'
             u'foo\n'
-            u'.in -3\n'
             u'.RE'
         )
 
@@ -380,10 +377,9 @@ class TestManWriter(WriterTest):
                 ast.Paragraph(children=[ast.Text(u'foo')])
             ]))
         item = (
-            u'.RS 0\n'
-            u'.IP %s. 4\n'
+            u'.RS\n'
+            u'.IP "%s. " 4\n'
             u'foo\n'
-            u'.in -4\n'
             u'.RE\n'
         )
         self.check_node(
@@ -396,14 +392,14 @@ class TestManWriter(WriterTest):
         self.check_node(emphasis, u'\\fIfoo\\fP')
 
         p = ast.Paragraph(children=[emphasis, ast.Text(u'bar')])
-        self.check_node(p, u'.sp\n\\fIfoo\\fPbar')
+        self.check_node(p, u'.P\n\\fIfoo\\fPbar')
 
     def test_strong(self):
         strong = ast.Strong(children=[ast.Text(u'foo')])
         self.check_node(strong, u'\\fBfoo\\fP')
 
         p = ast.Paragraph(children=[strong, ast.Text(u'bar')])
-        self.check_node(p, u'.sp\n\\fBfoo\\fPbar')
+        self.check_node(p, u'.P\n\\fBfoo\\fPbar')
 
     def test_block_quote(self):
         b = ast.BlockQuote(children=[
@@ -412,9 +408,8 @@ class TestManWriter(WriterTest):
             ])
         ])
         self.check_node(b,
-            u'.RS 0\n'
-            u'.IP >  2\n'
+            u'.RS\n'
+            u'.IP "> " 2\n'
             u'foo\n'
-            u'.in -2\n'
             u'.RE'
         )
