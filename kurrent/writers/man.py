@@ -98,75 +98,79 @@ class HangingIndentation(ParentNode):
         super(HangingIndentation, self).add_child(node)
 
 
-class Compiler(object):
-    def compile(self, node):
-        return getattr(self, 'compile_%s' % node.__class__.__name__)(node)
+class Translator(object):
+    def translate(self, node):
+        return getattr(self, 'translate_%s' % node.__class__.__name__)(node)
 
-    def compile_children(self, node):
+    def translate_children(self, node):
         rv = []
         for child in node.children:
-            compiled = self.compile(child)
-            if hasattr(compiled, '__iter__'):
-                rv.extend(compiled)
+            translated = self.translate(child)
+            if hasattr(translated, '__iter__'):
+                rv.extend(translated)
             else:
-                rv.append(compiled)
+                rv.append(translated)
         return rv
 
-    def compile_Document(self, node):
+    def translate_Document(self, node):
         return Document(
             title=node.metadata.get('title', u''),
             section=node.metadata.get('section', 1),
             date=datetime.now().strftime(u'%d %B %Y'),
-            children=self.compile_children(node)
+            children=self.translate_children(node)
         )
 
-    def compile_Header(self, node):
+    def translate_Header(self, node):
         if node.level == 1:
             return Section(node.text)
         elif node.level == 2:
             return SubSection(node.text)
         assert False, node.level
 
-    def compile_Text(self, node):
+    def translate_Text(self, node):
         return Text(node.text)
 
-    def compile_Emphasis(self, node):
-        return Emphasis(children=self.compile_children(node))
+    def translate_Emphasis(self, node):
+        return Emphasis(children=self.translate_children(node))
 
-    def compile_Strong(self, node):
-        return Strong(children=self.compile_children(node))
+    def translate_Strong(self, node):
+        return Strong(children=self.translate_children(node))
 
-    def compile_Paragraph(self, node):
-        return Paragraph(children=self.compile_children(node))
+    def translate_Paragraph(self, node):
+        return Paragraph(children=self.translate_children(node))
 
-    def compile_BlockQuote(self, node):
+    def translate_BlockQuote(self, node):
         return HangingIndentation(
             '>',
             designator=u'> ',
             indentation=2,
-            children=self.compile_children(node)
+            children=self.translate_children(node)
         )
 
-    def compile_OrderedList(self, node):
+    def translate_OrderedList(self, node):
         indentation = len(u'%d. ' % len(node.children))
         for index, item in enumerate(node.children, start=1):
             yield HangingIndentation(
                 'ol',
                 designator=u'%d. ' % index,
                 indentation=indentation,
-                children=self.compile_children(item)
+                children=self.translate_children(item)
             )
 
-    def compile_UnorderedList(self, node):
+    def translate_UnorderedList(self, node):
         for item in node.children:
             yield HangingIndentation(
                 'ul',
                 designator=u'\(bu ',
                 indentation=2,
-                children=self.compile_children(item)
+                children=self.translate_children(item)
             )
 
-compile_kurrent_ast = Compiler().compile
+
+translate = Translator().translate
+
+def compile(node):
+    return translate(node)
 
 
 class ManWriter(Writer):
@@ -176,7 +180,7 @@ class ManWriter(Writer):
         elif hasattr(kurrent_node, '__iter__'):
             man_nodes = kurrent_node
         else:
-            man_nodes = compile_kurrent_ast(kurrent_node)
+            man_nodes = compile(kurrent_node)
         if not hasattr(man_nodes, '__iter__'):
             man_nodes = [man_nodes]
         for man_node in man_nodes:
