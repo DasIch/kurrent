@@ -58,5 +58,5 @@ def test_single_document_builder_test(temp_file_directory, writer_cls,
         'single_document_test' + extension
     ))
     match = re.match(expected_content, content)
-    assert match is not None
+    assert match is not None, content
     assert match.group() == content

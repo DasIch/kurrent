@@ -165,16 +165,35 @@ class InlineTokenizer(TransactionIterator):
     def pop_state(self):
         self.state_stack.pop()
 
-    def expect(self, marks):
-        for mark in marks:
-            if next(self)[1] != mark:
+    def expect(self, expected_marks):
+        rv = []
+        for expected_mark in expected_marks:
+            try:
+                lexeme, mark = next(self)
+            except StopIteration:
                 raise BadPath()
+            if mark != expected_mark:
+                raise BadPath()
+            rv.append(lexeme)
+        return rv
 
     def match(self, marks):
         tokens = self.lookahead(n=len(marks))
         return len(tokens) == len(marks) and all(
             token[1] == mark for token, mark in zip(tokens, marks)
         )
+
+    def matches(self, rules):
+        for rule in rules:
+            names, marks = zip(*rule)
+            with self.transaction() as transaction:
+                lexemes = self.expect(marks)
+            if transaction.committed:
+                return dict(
+                    (name, lexeme) for name, lexeme in zip(names, lexemes)
+                    if name is not None
+                )
+        raise BadPath()
 
 
 class Line(text_type):
@@ -214,6 +233,14 @@ class LineIterator(TransactionIterator):
         self.lineno = lineno
         self.columnno = columnno
 
+    @property
+    def lineno(self):
+        return self._lineno
+
+    @lineno.setter
+    def lineno(self, new):
+        self._lineno = new
+
     def __next__(self):
         try:
             if PY2:
@@ -233,11 +260,9 @@ class LineIterator(TransactionIterator):
     def transaction(self, failure_exc=None, clean=None):
         old_position = self.lineno, self.columnno
         with super(LineIterator, self).transaction(failure_exc=failure_exc, clean=clean) as transaction:
-            try:
-                yield transaction
-            finally:
-                if not transaction.committed:
-                    self.lineno, self.columnno = old_position
+            yield transaction
+        if not transaction.committed:
+            self.lineno, self.columnno = old_position
 
     def until(self, condition):
         def inner():
@@ -252,29 +277,6 @@ class LineIterator(TransactionIterator):
     def exhaust_until(self, condition):
         list(self.until(condition))
 
-    def next_block(self):
-        lines = []
-        line = next(self)
-        while True:
-            lines.append(line)
-            try:
-                line = next(self)
-                if not line:
-                    self.exhaust_until(lambda line: line.strip())
-                    line = self.lookahead()[0]
-                    if line.startswith(u' '):
-                        next(self)
-                        lines.append(u'')
-                    else:
-                        break
-            except StopIteration:
-                break
-        return self.__class__(lines, lines[0].lineno - 1, lines[0].columnno)
-
-    def blockwise(self):
-        while True:
-            yield self.next_block()
-
     def unindented(self, spaces=None):
         if spaces is None:
             try:
@@ -286,7 +288,8 @@ class LineIterator(TransactionIterator):
             for line in self:
                 if line:
                     if len(line) < spaces or line[:spaces].strip():
-                        raise BadPath()
+                        self.push(line)
+                        break
                     line = line[spaces:]
                 yield line
         return self.__class__(inner(), self.lineno, self.columnno + spaces)
@@ -333,62 +336,128 @@ class Parser(object):
     def parse(self):
         return ast.Document(
             self.filename,
-            children=[
-                self.parse_block(block) for block in self.lines.blockwise()
-            ]
+            children=list(self.parse_blocks(self.lines))
         )
+
+    def parse_blocks(self, lines):
+        while True:
+            yield self.parse_block(lines)
 
     def parse_block(self, lines):
         parsers = [
-            self.parse_header,
-            self.parse_unordered_list,
-            self.parse_ordered_list,
-            self.parse_definition,
-            self.parse_quote,
+            self.parse_header, self.parse_unordered_list,
+            self.parse_ordered_list, self.parse_definition, self.parse_quote,
             self.parse_paragraph
         ]
         for parser in parsers:
             with lines.transaction():
                 return parser(lines)
-        assert False, u'all parsers failed, this should not happen'
+        raise BadPath()
+
+    def parse_header(self, lines):
+        line = next(lines)
+        match = _header_re.match(line)
+        if match is None:
+            raise BadPath()
+        lines.exhaust_until(bool)
+        return ast.Header(match.group(2), len(match.group(1)),
+            start=line.start, end=line.end
+        )
+
+    def parse_unordered_list(self, lines):
+        rv = ast.UnorderedList()
+        for line in lines:
+            if not line.startswith(u'-'):
+                raise BadPath()
+            stripped = line[1:].lstrip()
+            indentation = len(line) - len(stripped)
+            lines.push(u' ' * indentation + stripped)
+            rv.add_child(ast.ListItem(children=list(
+                self.parse_blocks(lines.unindented(indentation))
+            )))
+        return rv
+
+    def parse_ordered_list(self, lines):
+        rv = ast.OrderedList()
+        for line in lines:
+            match = _ordered_list_item_re.match(line)
+            if match is None:
+                raise BadPath()
+            stripped = match.group(2)
+            indentation = len(line) - len(stripped)
+            lines.push(u' ' * indentation + stripped)
+            rv.add_child(ast.ListItem(children=list(
+                self.parse_blocks(lines.unindented(indentation))
+            )))
+        return rv
+
+    def parse_definition(self, lines):
+        line = next(lines)
+        match = _definition_re.match(line)
+        if match is None:
+            raise BadPath()
+        bracket = match.group(1)
+        signature = match.group(2)
+        match = _definition_bracket_re.match(bracket)
+        if match.group(2) is None:
+            type = None
+            source = match.group(1)
+        else:
+            type, source = match.groups()
+        body = list(lines.unindented())
+        for i in range(len(body) - 1, 0, -1):
+            if body[i]:
+                break
+            del body[i]
+        return ast.Definition(type, source, signature, body)
+
+    def parse_quote(self, lines):
+        rv = ast.BlockQuote()
+        line = next(lines)
+        if not line.startswith(u'>'):
+            raise BadPath()
+        rv.start = line.start
+        stripped = line[1:].lstrip()
+        indentation = len(line) - len(stripped)
+        lines.push(u' ' * indentation + stripped)
+        rv.add_children(self.parse_blocks(lines.unindented(indentation)))
+        return rv
 
     def parse_paragraph(self, lines):
-        return ast.Paragraph(children=self.parse_inline(lines))
+        rv = ast.Paragraph(
+            children=self.parse_inline(lines.until(lambda line: not line))
+        )
+        lines.exhaust_until(bool)
+        return rv
 
-    def parse_inline(self, lines):
-        return self._parse_inline(InlineTokenizer(lines))
-
-    def _parse_inline(self, inline_tokens):
-        parsers = [self.parse_strong, self.parse_emphasis, self.parse_reference]
+    def parse_inline(self, tokens):
+        if isinstance(tokens, LineIterator):
+            tokens = InlineTokenizer(tokens)
         rv = []
-        while True:
-            try:
-                lexeme, mark = next(inline_tokens)
-            except StopIteration:
-                break
+        parsers = [self.parse_strong, self.parse_emphasis, self.parse_reference]
+        for lexeme, mark in tokens:
             if mark is None:
                 if rv and isinstance(rv[-1], ast.Text):
                     rv[-1].text += lexeme
                     rv[-1].end = lexeme.end
                 else:
-                    rv.append(ast.Text(lexeme, lexeme.start, lexeme.end))
+                    rv.append(
+                        ast.Text(lexeme, start=lexeme.start, end=lexeme.end)
+                    )
             else:
-                inline_tokens.push((lexeme, mark))
+                tokens.push((lexeme, mark))
                 for parser in parsers:
-                    with inline_tokens.transaction(failure_exc=BadPath) as transaction:
-                        rv.append(parser(inline_tokens))
+                    with tokens.transaction(failure_exc=BadPath) as transaction:
+                        rv.append(parser(tokens))
                     if transaction.committed:
                         break
                 else:
-                    inline_tokens.push((next(inline_tokens)[0], None))
+                    tokens.push((next(tokens)[0], None))
         return rv
 
     def parse_strong(self, tokens):
-        lexeme, mark = next(tokens)
-        if mark != u'**':
-            raise BadPath()
         rv = ast.Strong()
-        rv.start = lexeme.start
+        rv.start = tokens.expect([u'**'])[0].start
         for lexeme, mark in tokens:
             if mark == u'**':
                 rv.end = lexeme.end
@@ -406,11 +475,8 @@ class Parser(object):
         return rv
 
     def parse_emphasis(self, tokens):
-        lexeme, mark = next(tokens)
-        if mark != u'*':
-            raise BadPath()
         rv = ast.Emphasis()
-        rv.start = lexeme.start
+        rv.start = tokens.expect([u'*'])[0].start
         for lexeme, mark in tokens:
             if mark == u'*':
                 rv.end = lexeme.end
@@ -428,187 +494,56 @@ class Parser(object):
         return rv
 
     def parse_reference(self, tokens):
-        # [foo]                => None ]
-        # [foo|bar]            => None |  None ]
-        # [foo](bar)           => None ]( None )
-        # [foo|bar](baz)       => None |  None ]( None )
-        # [foo][bar]           => None ][ None ]
-        # [foo][bar|baz]       => None ][ None |  None ]
-        # [foo][bar|baz](spam) => None ][ None |  None ]( None )
-        # [foo][bar](baz)      => None ][ None ]( None )
-        #                              !       !       !
-        start, mark = next(tokens)
-        if mark != u'[':
-            raise BadPath()
-        type = text = definition = None
-        if tokens.match([None, u']']):
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'|', None, u']']):
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'](', None, u')']):
-            target = next(tokens)[0]
-            tokens.expect([u']('])
-            definition = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'|', None, u'](', None, u')']):
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            tokens.expect([u']('])
-            definition = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'|', None, u'](']):
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-            tokens.push((end[1], None))
-            end = end[0]
-        elif tokens.match([None, u'](']):
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-            tokens.push((end[1], None))
-            end = end[0]
-        elif tokens.match([None, u'][', None, u']']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'][', None, u'|', None, u']']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'][', None, u'|', None, u'](', None, u')']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            tokens.expect([u']('])
-            definition = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'][', None, u'](', None, u')']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            target = next(tokens)[0]
-            tokens.expect([u']('])
-            definition = next(tokens)[0]
-            end = next(tokens)[0]
-        elif tokens.match([None, u'][', None, u'|', None, u'](']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            type = next(tokens)[0]
-            tokens.expect([u'|'])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-            tokens.push((end[1], None))
-            end = end[0]
-        elif tokens.match([None, u'][', None, u'](']):
-            text = next(tokens)[0]
-            tokens.expect([u']['])
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-            tokens.push((end[1], None))
-            end = end[0]
-        elif tokens.match([None, u'][']):
-            target = next(tokens)[0]
-            end = next(tokens)[0]
-            tokens.push((end[1], None))
-            end = end[0]
-        else:
-            raise BadPath()
-        if text is None:
-            text = target
-        return ast.Reference(
-            type, target, text, definition=definition,
-            start=start.start, end=end.end
-        )
-
-    def parse_header(self, lines):
-        lines = list(lines)
-        if len(lines) > 1:
-            raise BadPath()
-        line = lines[0]
-        match = _header_re.match(line)
-        if match is None:
-            raise BadPath()
-        level_indicator = match.group(1)
-        text = match.group(2)
-        return ast.Header(text, len(level_indicator), line.start, line.end)
-
-    def parse_unordered_list(self, lines):
-        return self._parse_list(
-            ast.UnorderedList,
-            lambda l: l.startswith(u'-'),
-            lambda l: l[1:].lstrip(),
-            lines
-        )
-
-    def parse_ordered_list(self, lines):
-        def strip(line):
-            return _ordered_list_item_re.match(line).group(2)
-        return self._parse_list(
-            ast.OrderedList,
-            _ordered_list_item_re.match,
-            strip,
-            lines
-        )
-
-    def _parse_list(self, node_cls, match, strip, lines):
-        rv = node_cls()
-        lineiter = LineIterator(lines)
-        while True:
-            try:
-                line = next(lineiter)
-            except StopIteration:
-                break
-            if not match(line):
-                raise BadPath()
-            stripped = strip(line)
-            indentation_level = len(line) - len(stripped)
-            lineiter.push(u' ' * indentation_level + stripped)
-            rv.add_child(
-                ast.ListItem([
-                    self.parse_block(block)
-                    for block in lineiter.until(match)
-                                         .unindented(indentation_level)
-                                         .blockwise()
-                ])
-            )
-        return rv
-
-    def parse_definition(self, lines):
-        line = next(lines)
-        match = _definition_re.match(line)
-        if match is None:
-            raise BadPath()
-        bracket = match.group(1)
-        signature = match.group(2)
-        match = _definition_bracket_re.match(bracket)
-        if match.group(2) is None:
-            type = None
-            source = match.group(1)
-        else:
-            type, source = match.groups()
-        body = list(lines.unindented())
-        return ast.Definition(type, source, signature, body)
-
-    def parse_quote(self, lines):
-        rv = ast.BlockQuote()
-        line = next(lines)
-        if not line.startswith(u'>'):
-            raise BadPath()
-        rv.start = line.start
-        stripped = line[1:].lstrip()
-        indentation = len(line) - len(stripped)
-        lines.push(u' ' * indentation + stripped)
-        for block in lines.unindented(indentation).blockwise():
-            rv.add_child(self.parse_block(block))
-        return rv
+        # [foo]                => [ None ]
+        # [foo|bar]            => [ None |  None ]
+        # [foo](bar)           => [ None ]( None )
+        # [foo|bar](baz)       => [ None |  None ]( None )
+        # [foo][bar]           => [ None ][ None ]
+        # [foo][bar|baz]       => [ None ][ None |  None ]
+        # [foo][bar|baz](spam) => [ None ][ None |  None ]( None )
+        # [foo][bar](baz)      => [ None ][ None ]( None )
+        start = tokens.expect(['['])[0].start
+        regular = [
+            [('text', None), (None, u']['), ('target', None), (None, ']('),
+             ('definition', None), ('end', ')')
+            ],
+            [('text', None), (None, ']['), ('type', None), (None, '|'),
+             ('target', None), (None, ']('), ('definition', None),
+             ('end', ')')
+            ],
+            [('text', None), (None, ']['), ('type', None), (None, '|'),
+             ('target', None), ('end', ']')
+            ],
+            [('text', None), (None, ']['), ('target', None), ('end', ']')],
+            [('type', None), (None, '|'), ('target', None), (None, ']('),
+             ('definition', None), ('end', ')')
+            ],
+            [('target', None), (None, ']('), ('definition', None),
+             ('end', ')')
+            ],
+            [('type', None), (None, '|'), ('target', None), ('end', ']')],
+            [('target', None), ('end', ']')]
+        ]
+        error = [
+            [('type', None), (None, '|'), ('target', None), ('end', '](')],
+            [('text', None), (None, ']['), ('type', None), (None, '|'),
+             ('target', None), ('end', '](')
+            ],
+            [('text', None), (None, ']['), ('target', None), ('end', '](')],
+            [('target', None), ('end', '](')],
+            [('target', None), ('end', '][')]
+        ]
+        try:
+            result = tokens.matches(regular)
+        except BadPath:
+            result = tokens.matches(error)
+            tokens.push((result['end'][1], None))
+            result['end'] = result['end'][0]
+        result.update({
+            'start': start,
+            'end': result['end'].end
+        })
+        result.setdefault('type', None)
+        result.setdefault('text', result['target'])
+        result.setdefault('definition', None)
+        return ast.Reference(**result)

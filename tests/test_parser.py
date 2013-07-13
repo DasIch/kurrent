@@ -9,7 +9,7 @@
 import pytest
 
 from kurrent import ast
-from kurrent.parser import LineIterator, Parser, BadPath, DocumentError
+from kurrent.parser import LineIterator, Parser, DocumentError
 
 
 class TestParser(object):
@@ -27,49 +27,6 @@ class TestLineIterator(object):
             assert line == content
             assert line.lineno == lineno
             assert line.columnno == 1
-
-    def test_next_block(self):
-        iterator = LineIterator([u'foobar'])
-        block = list(iterator.next_block())
-        assert block == [u'foobar']
-        assert block[0].start == ast.Location(1, 1)
-        assert block[0].end == ast.Location(1, 7)
-
-        iterator = LineIterator([u'foo', u'bar'])
-        block = list(iterator.next_block())
-        assert block == [u'foo', u'bar']
-        assert block[0].start == ast.Location(1, 1)
-        assert block[0].end == ast.Location(1, 4)
-        assert block[1].start == ast.Location(2, 1)
-        assert block[1].end == ast.Location(2, 4)
-
-        iterator = LineIterator([u'foo', u'', u'bar'])
-        block = list(iterator.next_block())
-        assert block == [u'foo']
-        assert block[0].start == ast.Location(1, 1)
-        assert block[0].end == ast.Location(1, 4)
-        block = list(iterator.next_block())
-        assert block == [u'bar']
-        assert block[0].start == ast.Location(3, 1)
-        assert block[0].end == ast.Location(3, 4)
-
-        iterator = LineIterator([u'foo', u'', u'', u'bar'])
-        block = list(iterator.next_block())
-        assert block == [u'foo']
-        assert block[0].start == ast.Location(1, 1)
-        assert block[0].end == ast.Location(1, 4)
-        block = list(iterator.next_block())
-        assert block == [u'bar']
-        assert block[0].start == ast.Location(4, 1)
-        assert block[0].end == ast.Location(4, 4)
-
-        iterator = LineIterator([u'foo', u'', u' bar'])
-        block = list(iterator.next_block())
-        assert block == [u'foo', u'', u' bar']
-        for lineno, end in enumerate([4, 1, 5], 1):
-            index = lineno - 1
-            assert block[index].start == ast.Location(lineno, 1)
-            assert block[index].end == ast.Location(lineno, end)
 
     def test_until(self):
         iterator = LineIterator([u'foo', u'bar', u'baz']).until(lambda l: l == u'baz')
@@ -89,12 +46,10 @@ class TestLineIterator(object):
             assert line.end == ast.Location(lineno, 6)
 
         iterator = LineIterator([u'foo'])
-        with pytest.raises(BadPath):
-            list(iterator.unindented(2))
+        assert list(iterator.unindented(2)) == []
 
         iterator = LineIterator([u'  foo', u'  bar', u' baz'])
-        with pytest.raises(BadPath):
-            list(iterator.unindented(2))
+        assert list(iterator.unindented(2)) == [u'foo', u'bar']
 
 
 class TestParagraph(object):
@@ -1105,18 +1060,6 @@ class TestQuote(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'foo bar'
-
-    def test_missing_indent(self):
-        document = Parser.from_string(
-            u'> foo\n'
-            u'bar'
-        ).parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
-        assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'> foo bar'
 
     def test_nesting(self):
         document = Parser.from_string(
