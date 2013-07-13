@@ -1031,6 +1031,7 @@ class TestDefinition(object):
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'blubb'
 
+
 class TestQuote(object):
     def test_simple(self):
         document = Parser.from_string(

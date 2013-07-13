@@ -75,4 +75,3 @@ class Writer(object):
     def write_children(self, node):
         for child in node.children:
             self.write_node(child)
-

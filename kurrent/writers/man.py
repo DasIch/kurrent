@@ -184,6 +184,7 @@ def fold(node):
             fold(child)
     return node
 
+
 def compile(node):
     nodes = translate(node)
     if not hasattr(nodes, '__iter__'):

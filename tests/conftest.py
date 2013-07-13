@@ -12,6 +12,7 @@ import tempfile
 
 import pytest
 
+
 @pytest.fixture
 def temp_file_path(request):
     file_path = tempfile.mkstemp()[1]
