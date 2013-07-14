@@ -133,7 +133,8 @@ class InlineTokenizer(TransactionIterator):
                 raise BadPath()
 
     def _tokenize(self, line):
-        columnno = text_columnno = 0
+        columnno = 0
+        text_columnno = line.columnno
         text = []
         while line[columnno:]:
             for regex, label, method, args in self.state:
@@ -142,12 +143,15 @@ class InlineTokenizer(TransactionIterator):
                     break
             else:
                 if not text:
-                    text_columnno = columnno
+                    if columnno == 0:
+                        text_columnno = line.columnno
+                    else:
+                        text_columnno = columnno + 1
                 text.append(line[columnno:columnno + 1])
                 columnno += 1
             if match is not None:
                 if text:
-                    yield Line(u''.join(text), line.lineno, text_columnno + 1), None
+                    yield Line(u''.join(text), line.lineno, text_columnno), None
                     text = []
                 yield Line(match.group(1), line.lineno, columnno + 1), label
                 if match.end() <= columnno:
@@ -156,7 +160,7 @@ class InlineTokenizer(TransactionIterator):
                 if method is not None:
                     getattr(self, method)(*args)
         if text:
-            yield Line(u''.join(text), line.lineno, text_columnno + 1), None
+            yield Line(u''.join(text), line.lineno, text_columnno), None
             text = []
 
     def push_state(self, state):
@@ -363,6 +367,8 @@ class Parser(object):
     def parse_unordered_list(self, lines):
         rv = ast.UnorderedList()
         for line in lines:
+            if rv.start is None:
+                rv.start = line.start
             if not line.startswith(u'-'):
                 raise BadPath()
             stripped = line[1:].lstrip()
@@ -371,6 +377,7 @@ class Parser(object):
             rv.add_child(ast.ListItem(children=list(
                 self.parse_blocks(lines.unindented(indentation))
             )))
+            rv.children[-1].start = line.start
         return rv
 
     def parse_ordered_list(self, lines):
