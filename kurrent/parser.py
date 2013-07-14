@@ -277,6 +277,9 @@ class LineIterator(TransactionIterator):
     def exhaust_until(self, condition):
         list(self.until(condition))
 
+    def skip_empty(self):
+        self.exhaust_until(bool)
+
     def unindented(self, spaces=None):
         if spaces is None:
             try:
@@ -359,7 +362,7 @@ class Parser(object):
         match = _header_re.match(line)
         if match is None:
             raise BadPath()
-        lines.exhaust_until(bool)
+        lines.skip_empty()
         return ast.Header(match.group(2), len(match.group(1)),
             start=line.start, end=line.end
         )
@@ -436,7 +439,7 @@ class Parser(object):
         rv = ast.Paragraph(
             children=self.parse_inline(lines.until(lambda line: not line))
         )
-        lines.exhaust_until(bool)
+        lines.skip_empty()
         return rv
 
     def parse_inline(self, tokens):
