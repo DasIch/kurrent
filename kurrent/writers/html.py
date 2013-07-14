@@ -73,3 +73,12 @@ class HTML5Writer(Writer):
     def write_Definition(self, node):
         # prevents NotImplementedError, we ignore Definitions
         pass
+
+    def write_RawBlock(self, node):
+        self.write_line(u'<pre>')
+        indent_stack = self.indent_stack
+        self.indent_stack = []
+        for line in node.body:
+            self.write_line(line)
+        self.indent_stack = indent_stack
+        self.write_line(u'</pre>')

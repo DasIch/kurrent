@@ -271,6 +271,18 @@ class TestHTML5Writer(WriterTest):
             u'</blockquote>'
         )
 
+    def test_write_raw_block(self):
+        raw_block = ast.RawBlock([
+            u'foo\n'
+            u'bar'
+        ])
+        self.check_node(raw_block,
+            u'<pre>\n'
+            u'foo\n'
+            u'bar\n'
+            u'</pre>'
+        )
+
 
 class TestManWriter(WriterTest):
     writer_cls = ManWriter
