@@ -155,6 +155,17 @@ class TestKurrentWriter(WriterTest):
             u'  > bar'
         )
 
+    def test_write_raw_block(self):
+        raw_block = ast.RawBlock([
+            u'foo',
+            u'bar'
+        ])
+        self.check_node(
+            raw_block,
+            u'    foo\n'
+            u'    bar'
+        )
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer

@@ -133,3 +133,9 @@ class KurrentWriter(Writer):
         with self.indent(u'  '):
             yield True
         # block newline is emitted by last quoted block
+
+    @contextmanager
+    def write_RawBlock(self, node):
+        for line in node.body:
+            self.write_line(u' ' * 4 + line)
+        self.write_block_newline()
