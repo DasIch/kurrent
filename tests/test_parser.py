@@ -28,6 +28,16 @@ class TestLineIterator(object):
             assert line.lineno == lineno
             assert line.columnno == 1
 
+    def test_push(self):
+        iterator = LineIterator([u'foo'])
+        line = next(iterator)
+        assert iterator.lineno == 1
+        assert line == u'foo'
+        iterator.push(u'bar')
+        line = next(iterator)
+        assert iterator.lineno == 1
+        assert line == u'bar'
+
     def test_until(self):
         iterator = LineIterator([u'foo', u'bar', u'baz']).until(lambda l: l == u'baz')
         for lineno, content in enumerate([u'foo', u'bar'], 1):

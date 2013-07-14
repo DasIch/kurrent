@@ -256,6 +256,10 @@ class LineIterator(TransactionIterator):
         self.lineno += 1
         return Line(line.rstrip(u'\r\n'), self.lineno, self.columnno)
 
+    def push(self, line):
+        super(LineIterator, self).push(line)
+        self.lineno -= 1
+
     @contextmanager
     def transaction(self, failure_exc=None, clean=None):
         old_position = self.lineno, self.columnno
