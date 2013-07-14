@@ -233,14 +233,6 @@ class LineIterator(TransactionIterator):
         self.lineno = lineno
         self.columnno = columnno
 
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @lineno.setter
-    def lineno(self, new):
-        self._lineno = new
-
     def __next__(self):
         try:
             if PY2:
