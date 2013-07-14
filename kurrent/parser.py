@@ -369,14 +369,11 @@ class Parser(object):
         for line in lines:
             if rv.start is None:
                 rv.start = line.start
-            if not line.startswith(u'-'):
-                raise BadPath()
-            stripped = line[1:].lstrip()
-            indentation = len(line) - len(stripped)
-            lines.push(u' ' * indentation + stripped)
-            rv.add_child(ast.ListItem(children=list(
-                self.parse_blocks(lines.unindented(indentation))
-            )))
+            rv.add_child(self.parse_list_item(
+                lambda line: line.startswith(u'-'),
+                lambda line: line[1:].lstrip(),
+                line, lines
+            ))
             rv.children[-1].start = line.start
         return rv
 
@@ -385,17 +382,23 @@ class Parser(object):
         for line in lines:
             if rv.start is None:
                 rv.start = line.start
-            match = _ordered_list_item_re.match(line)
-            if match is None:
-                raise BadPath()
-            stripped = match.group(2)
-            indentation = len(line) - len(stripped)
-            lines.push(u' ' * indentation + stripped)
-            rv.add_child(ast.ListItem(children=list(
-                self.parse_blocks(lines.unindented(indentation))
-            )))
+            rv.add_child(self.parse_list_item(
+                _ordered_list_item_re.match,
+                lambda line: _ordered_list_item_re.match(line).group(2),
+                line, lines
+            ))
             rv.children[-1].start = line.start
         return rv
+
+    def parse_list_item(self, match, strip, line, lines):
+        if not match(line):
+            raise BadPath()
+        stripped = strip(line)
+        indentation = len(line) - len(stripped)
+        lines.push(u' ' * indentation + stripped)
+        return ast.ListItem(children=list(
+            self.parse_blocks(lines.unindented(indentation))
+        ))
 
     def parse_definition(self, lines):
         line = next(lines)
