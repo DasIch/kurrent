@@ -1096,13 +1096,19 @@ class TestOrderedList(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.OrderedList)
         list = document.children[0]
+        assert list.start == ast.Location(1, 1)
+        assert list.end == ast.Location(2, 7)
         assert len(list.children) == 2
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(list.children[i], ast.ListItem)
             item = list.children[i]
+            assert item.start == ast.Location(i + 1, 1)
+            assert item.end == ast.Location(i + 1, 7)
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
             p = item.children[0]
+            assert p.start == ast.Location(i + 1, 4)
+            assert p.end == ast.Location(i + 1, 7)
             assert len(p.children) == 1
             assert isinstance(p.children[0], ast.Text)
             assert p.children[0].text == text
@@ -1114,13 +1120,27 @@ class TestOrderedList(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.OrderedList)
         list = document.children[0]
+        assert list.start == ast.Location(1, 1)
+        assert list.end == ast.Location(3, 7)
         assert len(list.children) == 2
         for i, text in enumerate([u'foo bar', u'baz']):
             assert isinstance(list.children[i], ast.ListItem)
             item = list.children[i]
+            if i == 0:
+                assert item.start == ast.Location(1, 1)
+                assert item.end == ast.Location(2, 7)
+            else:
+                assert item.start == ast.Location(3, 1)
+                assert item.end == ast.Location(3, 7)
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
             p = item.children[0]
+            if i == 0:
+                assert p.start == ast.Location(1, 4)
+                assert p.end == ast.Location(2, 7)
+            else:
+                assert p.start == ast.Location(3, 4)
+                assert p.end == ast.Location(3, 7)
             assert len(p.children) == 1
             assert isinstance(p.children[0], ast.Text)
             assert p.children[0].text == text
@@ -1144,43 +1164,65 @@ class TestOrderedList(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.OrderedList)
         list = document.children[0]
+        assert list.start == ast.Location(1, 1)
+        assert list.end == ast.Location(4, 7)
         assert len(list.children) == 2
 
         assert isinstance(list.children[0], ast.ListItem)
         item = list.children[0]
+        assert item.start == ast.Location(1, 1)
+        assert item.end == ast.Location(3, 13)
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.OrderedList)
         nested = item.children[0]
+        assert nested.start == ast.Location(1, 4)
+        assert nested.end == ast.Location(3, 13)
         assert len(nested.children) == 3
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(nested.children[i], ast.ListItem)
             item = nested.children[i]
+            assert item.start == ast.Location(i + 1, 4)
+            assert item.end == ast.Location(i + 1, 10)
             assert len(item.children) == 1
             assert isinstance(item.children[0], ast.Paragraph)
             p = item.children[0]
+            assert p.start == ast.Location(i + 1, 7)
+            assert p.end == ast.Location(i + 1, 10)
             assert len(p.children) == 1
             assert isinstance(p.children[0], ast.Text)
             assert p.children[0].text == text
 
         assert isinstance(nested.children[2], ast.ListItem)
         item = nested.children[2]
+        assert item.start == ast.Location(3, 4)
+        assert item.end == ast.Location(3, 13)
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.OrderedList)
         double_nested = item.children[0]
+        assert double_nested.start == ast.Location(3, 7)
+        assert double_nested.end == ast.Location(3, 13)
         assert len(double_nested.children) == 1
         item = double_nested.children[0]
+        assert item.start == ast.Location(3, 7)
+        assert item.end == ast.Location(3, 13)
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
         p = item.children[0]
+        assert p.start == ast.Location(3, 10)
+        assert p.end == ast.Location(3, 13)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'baz'
 
         assert isinstance(list.children[1], ast.ListItem)
         item = list.children[1]
+        assert item.start == ast.Location(4, 1)
+        assert item.end == ast.Location(4, 7)
         assert len(item.children) == 1
         assert isinstance(item.children[0], ast.Paragraph)
         p = item.children[0]
+        assert p.start == ast.Location(4, 4)
+        assert p.end == ast.Location(4, 7)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'baz'
@@ -1192,13 +1234,23 @@ class TestOrderedList(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.OrderedList)
         list = document.children[0]
+        assert list.start == ast.Location(1, 1)
+        assert list.end == ast.Location(3, 7)
         assert len(list.children) == 1
         assert isinstance(list.children[0], ast.ListItem)
         item = list.children[0]
+        assert item.start == ast.Location(1, 1)
+        assert item.end == ast.Location(3, 7)
         assert len(item.children) == 2
         for i, text in enumerate([u'foo', u'bar']):
             assert isinstance(item.children[i], ast.Paragraph)
             p = item.children[i]
+            if i == 0:
+                assert p.start == ast.Location(1, 4)
+                assert p.end == ast.Location(1, 7)
+            else:
+                assert p.start == ast.Location(3, 4)
+                assert p.end == ast.Location(3, 7)
             assert len(p.children) == 1
             assert isinstance(p.children[0], ast.Text)
             assert p.children[0].text == text

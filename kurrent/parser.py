@@ -383,6 +383,8 @@ class Parser(object):
     def parse_ordered_list(self, lines):
         rv = ast.OrderedList()
         for line in lines:
+            if rv.start is None:
+                rv.start = line.start
             match = _ordered_list_item_re.match(line)
             if match is None:
                 raise BadPath()
@@ -392,6 +394,7 @@ class Parser(object):
             rv.add_child(ast.ListItem(children=list(
                 self.parse_blocks(lines.unindented(indentation))
             )))
+            rv.children[-1].start = line.start
         return rv
 
     def parse_definition(self, lines):
