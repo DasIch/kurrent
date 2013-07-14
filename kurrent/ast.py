@@ -169,3 +169,9 @@ class ListItem(ParentNode):
 
 class BlockQuote(ParentNode):
     pass
+
+
+class RawBlock(ChildNode):
+    def __init__(self, body, start=None, end=None):
+        super(RawBlock, self).__init__(start=start, end=end)
+        self.body = body

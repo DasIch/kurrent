@@ -1355,3 +1355,16 @@ class TestQuote(object):
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'bar'
+
+
+class TestRawBlock(object):
+    def test_simple(self):
+        document = Parser.from_string(
+            u' this is code'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.RawBlock)
+        r = document.children[0]
+        assert r.start == ast.Location(1, 2)
+        assert r.end == ast.Location(1, 14)
+        assert r.body == [u'this is code']

@@ -287,6 +287,8 @@ class LineIterator(TransactionIterator):
             except StopIteration:
                 return []
             spaces = len(line) - len(line.lstrip())
+            if not spaces:
+                return []
         def inner():
             for line in self:
                 if line:
@@ -350,7 +352,7 @@ class Parser(object):
         parsers = [
             self.parse_header, self.parse_unordered_list,
             self.parse_ordered_list, self.parse_definition, self.parse_quote,
-            self.parse_paragraph
+            self.parse_raw, self.parse_paragraph
         ]
         for parser in parsers:
             with lines.transaction():
@@ -434,6 +436,12 @@ class Parser(object):
         lines.push(u' ' * indentation + stripped)
         rv.add_children(self.parse_blocks(lines.unindented(indentation)))
         return rv
+
+    def parse_raw(self, lines):
+        body = list(lines.unindented())
+        if not body:
+            raise BadPath()
+        return ast.RawBlock(body, start=body[0].start, end=body[-1].end)
 
     def parse_paragraph(self, lines):
         rv = ast.Paragraph(
