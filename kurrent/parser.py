@@ -525,10 +525,10 @@ class Parser(object):
         start = tokens.expect(['['])[0].start
         regular = [
             [('text', None), (None, u']['), ('target', None), (None, ']('),
-             ('definition', None), ('end', ')')
+             ('signature', None), ('end', ')')
             ],
             [('text', None), (None, ']['), ('type', None), (None, '|'),
-             ('target', None), (None, ']('), ('definition', None),
+             ('target', None), (None, ']('), ('signature', None),
              ('end', ')')
             ],
             [('text', None), (None, ']['), ('type', None), (None, '|'),
@@ -536,9 +536,9 @@ class Parser(object):
             ],
             [('text', None), (None, ']['), ('target', None), ('end', ']')],
             [('type', None), (None, '|'), ('target', None), (None, ']('),
-             ('definition', None), ('end', ')')
+             ('signature', None), ('end', ')')
             ],
-            [('target', None), (None, ']('), ('definition', None),
+            [('target', None), (None, ']('), ('signature', None),
              ('end', ')')
             ],
             [('type', None), (None, '|'), ('target', None), ('end', ']')],
@@ -565,5 +565,5 @@ class Parser(object):
         })
         result.setdefault('type', None)
         result.setdefault('text', result['target'])
-        result.setdefault('definition', None)
+        result.setdefault('signature', None)
         return ast.Reference(**result)

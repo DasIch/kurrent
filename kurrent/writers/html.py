@@ -64,7 +64,7 @@ class HTML5Writer(Writer):
 
     def write_Reference(self, node):
         self.write(u'<a href="')
-        self.write(node.definition)
+        self.write(node.signature)
         self.write(u'">')
         self.write(escape(node.text))
         self.write(u'</a>')

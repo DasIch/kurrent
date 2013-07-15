@@ -107,9 +107,9 @@ class KurrentWriter(Writer):
             self.write(u'|')
         self.write(node.target)
         self.write(u']')
-        if node.definition is not None:
+        if node.signature is not None:
             self.write(u'(')
-            self.write(node.definition)
+            self.write(node.signature)
             self.write(u')')
 
     def write_Definition(self, node):

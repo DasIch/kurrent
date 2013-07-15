@@ -160,18 +160,19 @@ class Header(ChildNode):
 
 
 class Reference(ChildNode):
-    def __init__(self, type, target, text, definition=None, start=None,
-                 end=None, parent=None):
+    def __init__(self, type, target, text, signature=None, definition=None,
+                 start=None, end=None, parent=None):
         super(Reference, self).__init__(start=start, end=end, parent=parent)
         self.type = type
         self.target = target
         self.text = text
+        self.signature = signature
         self.definition = definition
 
     def __repr__(self):
-        return '%s(%r, %r, %r, definition=%r, start=%r, end=%r, parent=%r)' % (
+        return '%s(%r, %r, %r, signature=%r, definition=%r, start=%r, end=%r, parent=%r)' % (
             self.__class__.__name__, self.type, self.target, self.text,
-            self.definition, self.start, self.end, self.parent
+            self.signature, self.definition, self.start, self.end, self.parent
         )
 
 

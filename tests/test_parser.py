@@ -391,9 +391,10 @@ class TestReference(object):
         assert r.target == r.text == u'foo'
         assert r.target.start == r.text.start == ast.Location(1, 2)
         assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition == u'bar'
-        assert r.definition.start == ast.Location(1, 7)
-        assert r.definition.end == ast.Location(1, 10)
+        assert r.signature == u'bar'
+        assert r.signature.start == ast.Location(1, 7)
+        assert r.signature.end == ast.Location(1, 10)
+        assert r.definition is None
 
     def test_only_with_inline_definition_missing_closing_paren(self):
         document = Parser.from_string(u'[foo](bar').parse()
@@ -409,6 +410,7 @@ class TestReference(object):
         assert r.target == r.text == u'foo'
         assert r.target.start == r.text.start == ast.Location(1, 2)
         assert r.target.end == r.text.end == ast.Location(1, 5)
+        assert r.signature is None
         assert r.definition is None
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(bar'
@@ -465,9 +467,10 @@ class TestReference(object):
         assert r.target == r.text == u'bar'
         assert r.target.start == r.text.start == ast.Location(1, 6)
         assert r.target.end == r.text.end == ast.Location(1, 9)
-        assert r.definition == u'baz'
-        assert r.definition.start == ast.Location(1, 11)
-        assert r.definition.end == ast.Location(1, 14)
+        assert r.signature == u'baz'
+        assert r.signature.start == ast.Location(1, 11)
+        assert r.signature.end == ast.Location(1, 14)
+        assert r.definition is None
 
     def test_only_with_type_and_inline_definition_missing_paren(self):
         document = Parser.from_string(u'[foo|bar](baz').parse()
@@ -690,9 +693,10 @@ class TestReference(object):
         assert r.target == u'bar'
         assert r.target.start == ast.Location(1, 7)
         assert r.target.end == ast.Location(1, 10)
-        assert r.definition == u'baz'
-        assert r.definition.start == ast.Location(1, 12)
-        assert r.definition.end == ast.Location(1, 15)
+        assert r.signature == u'baz'
+        assert r.signature.start == ast.Location(1, 12)
+        assert r.signature.end == ast.Location(1, 15)
+        assert r.definition is None
 
     def test_only_with_text_and_definition_missing_paren(self):
         document = Parser.from_string(u'[foo][bar](baz').parse()
@@ -776,9 +780,10 @@ class TestReference(object):
         assert r.target == u'baz'
         assert r.target.start == ast.Location(1, 11)
         assert r.target.end == ast.Location(1, 14)
-        assert r.definition == u'spam'
-        assert r.definition.start == ast.Location(1, 16)
-        assert r.definition.end == ast.Location(1, 20)
+        assert r.signature == u'spam'
+        assert r.signature.start == ast.Location(1, 16)
+        assert r.signature.end == ast.Location(1, 20)
+        assert r.definition is None
 
     def test_only_with_text_and_type_and_definition_missing_paren(self):
         document = Parser.from_string(u'[foo][bar|baz](spam').parse()

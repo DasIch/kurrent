@@ -107,16 +107,16 @@ class TestKurrentWriter(WriterTest):
         reference = ast.Reference(None, u'foo', u'bar')
         self.check_node(reference, u'[bar][foo]')
 
-        reference = ast.Reference(None, u'foo', u'foo', definition=u'bar')
+        reference = ast.Reference(None, u'foo', u'foo', signature=u'bar')
         self.check_node(reference, u'[foo](bar)')
 
-        reference = ast.Reference(u'foo', u'bar', u'bar', definition=u'baz')
+        reference = ast.Reference(u'foo', u'bar', u'bar', signature=u'baz')
         self.check_node(reference, u'[foo|bar](baz)')
 
-        reference = ast.Reference(None, u'foo', u'bar', definition=u'baz')
+        reference = ast.Reference(None, u'foo', u'bar', signature=u'baz')
         self.check_node(reference, u'[bar][foo](baz)')
 
-        reference = ast.Reference(u'foo', u'bar', u'baz', definition=u'spam')
+        reference = ast.Reference(u'foo', u'bar', u'baz', signature=u'spam')
         self.check_node(reference, u'[baz][foo|bar](spam)')
 
     def test_definition(self):
@@ -247,10 +247,10 @@ class TestHTML5Writer(WriterTest):
         self.check_node(strong, u'<strong>foo</strong>')
 
     def test_write_reference(self):
-        reference = ast.Reference(None, u'foo', u'foo', definition=u'bar')
+        reference = ast.Reference(None, u'foo', u'foo', signature=u'bar')
         self.check_node(reference, u'<a href="bar">foo</a>')
 
-        reference = ast.Reference(None, u'foo', u'bar', definition=u'baz')
+        reference = ast.Reference(None, u'foo', u'bar', signature=u'baz')
         self.check_node(reference, u'<a href="baz">bar</a>')
 
     def test_doesnt_write_definition(self):

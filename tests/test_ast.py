@@ -338,11 +338,10 @@ class TestReference(ASTNodeTest):
         assert node.definition == 'definition'
 
     def test_repr(self):
-        assert (
-            repr(Reference('type', 'target', 'text')) ==
+        assert repr(Reference('type', 'target', 'text')) == (
             "Reference("
-                "'type', 'target', 'text', definition=None, start=None, "
-                "end=None, parent=None"
+                "'type', 'target', 'text', signature=None, definition=None, "
+                "start=None, end=None, parent=None"
             ")"
         )
 
