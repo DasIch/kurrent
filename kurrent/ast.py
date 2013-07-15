@@ -147,8 +147,9 @@ class Reference(ChildNode):
 
 
 class Definition(ChildNode):
-    def __init__(self, type, source, signature, body, start=None, end=None):
-        super(Definition, self).__init__(start=start, end=end)
+    def __init__(self, type, source, signature, body, start=None, end=None,
+                 parent=None):
+        super(Definition, self).__init__(start=start, end=end, parent=parent)
         self.type = type
         self.source = source
         self.signature = signature

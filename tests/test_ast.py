@@ -10,7 +10,7 @@ import pytest
 
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
-    UnorderedList, OrderedList, ListItem, Reference
+    UnorderedList, OrderedList, ListItem, Reference, Definition
 )
 
 
@@ -309,3 +309,19 @@ class TestReference(ASTNodeTest):
         assert node.target == 'target'
         assert node.text == 'text'
         assert node.definition == 'definition'
+
+
+class TestDefinition(ASTNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return lambda *args, **kwargs: Definition(
+            'type', 'source', 'signature', [], *args, **kwargs
+        )
+
+    def test_init(self, node_cls):
+        super(TestDefinition, self).test_init(node_cls)
+        node = Definition('type', 'source', 'signature', [])
+        assert node.type == 'type'
+        assert node.source == 'source'
+        assert node.signature == 'signature'
+        assert node.body == []
