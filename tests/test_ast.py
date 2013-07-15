@@ -10,7 +10,7 @@ import pytest
 
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
-    UnorderedList, OrderedList, ListItem, Reference, Definition
+    UnorderedList, OrderedList, ListItem, Reference, Definition, BlockQuote
 )
 
 
@@ -325,3 +325,9 @@ class TestDefinition(ASTNodeTest):
         assert node.source == 'source'
         assert node.signature == 'signature'
         assert node.body == []
+
+
+class TestBlockQuote(ParentNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return BlockQuote
