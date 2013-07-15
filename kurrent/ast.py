@@ -23,12 +23,10 @@ class Location(object):
 
     def __lt__(self, other):
         if isinstance(other, self.__class__):
-            if self.line < other.line:
-                return True
-            elif self.line > other.line:
-                return False
-            else:
-                return self.column < other.column
+            return (
+                self.line < other.line or
+                self.line == other.line and self.column < other.column
+            )
         return NotImplemented
 
     def __le__(self, other):
