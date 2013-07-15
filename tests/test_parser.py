@@ -288,7 +288,7 @@ class TestStrong(InlineMarkupTest):
         assert p.children[0].text == u'foo**'
 
 
-class TestReference(object):
+class TestInlineExtension(object):
     def test_only(self):
         document = Parser.from_string(u'[foo]').parse()
         assert len(document.children) == 1
@@ -297,15 +297,17 @@ class TestReference(object):
         assert p.start == ast.Location(1, 1)
         assert p.end == ast.Location(1, 6)
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
 
     def test_only_missing_closing_bracket(self):
         document = Parser.from_string(u'[foo').parse()
@@ -342,16 +344,19 @@ class TestReference(object):
         assert p.start == ast.Location(1, 1)
         assert p.end == ast.Location(1, 10)
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 10)
         assert r.type == u'foo'
         assert r.type.start == ast.Location(1, 2)
         assert r.type.end == ast.Location(1, 5)
-        assert r.target == r.text == u'bar'
-        assert r.target.start == r.text.start == ast.Location(1, 6)
-        assert r.target.end == r.text.end == ast.Location(1, 9)
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 6)
+        assert r.primary.end == ast.Location(1, 9)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
 
     def test_only_with_type_missing_closing_bracket(self):
         document = Parser.from_string(u'[foo|bar').parse()
@@ -383,18 +388,19 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 11)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.signature == u'bar'
-        assert r.signature.start == ast.Location(1, 7)
-        assert r.signature.end == ast.Location(1, 10)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary == u'bar'
+        assert r.secondary.start == ast.Location(1, 7)
+        assert r.secondary.end == ast.Location(1, 10)
+        assert r.text is None
+        assert r.metadata == {}
 
     def test_only_with_inline_definition_missing_closing_paren(self):
         document = Parser.from_string(u'[foo](bar').parse()
@@ -402,16 +408,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.signature is None
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(bar'
 
@@ -421,15 +428,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
@@ -439,15 +448,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
@@ -457,20 +468,21 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 15)
         assert r.type == u'foo'
         assert r.type.start == ast.Location(1, 2)
         assert r.type.end == ast.Location(1, 5)
-        assert r.target == r.text == u'bar'
-        assert r.target.start == r.text.start == ast.Location(1, 6)
-        assert r.target.end == r.text.end == ast.Location(1, 9)
-        assert r.signature == u'baz'
-        assert r.signature.start == ast.Location(1, 11)
-        assert r.signature.end == ast.Location(1, 14)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 6)
+        assert r.primary.end == ast.Location(1, 9)
+        assert r.secondary == u'baz'
+        assert r.secondary.start == ast.Location(1, 11)
+        assert r.secondary.end == ast.Location(1, 14)
+        assert r.text is None
+        assert r.metadata == {}
 
     def test_only_with_type_and_inline_definition_missing_paren(self):
         document = Parser.from_string(u'[foo|bar](baz').parse()
@@ -478,17 +490,18 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 10)
         assert r.type == u'foo'
         assert r.type.start == ast.Location(1, 2)
         assert r.type.end == ast.Location(1, 5)
-        assert r.target == r.text == u'bar'
-        assert r.target.start == r.text.start == ast.Location(1, 6)
-        assert r.target.end == r.text.end == ast.Location(1, 9)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 6)
+        assert r.primary.end == ast.Location(1, 9)
+        assert r.secondary is None
+        assert r.text is None
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(baz'
 
@@ -498,17 +511,19 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 10)
         assert r.type == u'foo'
         assert r.type.start == ast.Location(1, 2)
         assert r.type.end == ast.Location(1, 5)
-        assert r.target == r.text == u'bar'
-        assert r.target.start == r.text.start == ast.Location(1, 6)
-        assert r.target.end == r.text.end == ast.Location(1, 9)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 6)
+        assert r.primary.end == ast.Location(1, 9)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
@@ -518,17 +533,19 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 10)
         assert r.type == u'foo'
         assert r.type.start == ast.Location(1, 2)
         assert r.type.end == ast.Location(1, 5)
-        assert r.target == r.text == u'bar'
-        assert r.target.start == r.text.start == ast.Location(1, 6)
-        assert r.target.end == r.text.end == ast.Location(1, 9)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 6)
+        assert r.primary.end == ast.Location(1, 9)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
@@ -538,7 +555,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 11)
@@ -546,10 +563,11 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.text.start == ast.Location(1, 2)
         assert r.text.end == ast.Location(1, 5)
-        assert r.target == u'bar'
-        assert r.target.start == ast.Location(1, 7)
-        assert r.target.end == ast.Location(1, 10)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 7)
+        assert r.primary.end == ast.Location(1, 10)
+        assert r.secondary is None
+        assert r.metadata == {}
 
     def test_only_with_text_missing_bracket(self):
         document = Parser.from_string(u'[foo][bar').parse()
@@ -557,11 +575,13 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar'
 
@@ -571,15 +591,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[]'
 
@@ -589,15 +611,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'['
 
@@ -607,7 +631,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 15)
@@ -617,10 +641,11 @@ class TestReference(object):
         assert r.type == u'bar'
         assert r.type.start == ast.Location(1, 7)
         assert r.type.end == ast.Location(1, 10)
-        assert r.target == u'baz'
-        assert r.target.start == ast.Location(1, 11)
-        assert r.target.end == ast.Location(1, 14)
-        assert r.definition is None
+        assert r.primary == u'baz'
+        assert r.primary.start == ast.Location(1, 11)
+        assert r.primary.end == ast.Location(1, 14)
+        assert r.secondary is None
+        assert r.metadata == {}
 
     def test_only_with_text_and_type_missing_bracket(self):
         document = Parser.from_string(u'[foo][bar|baz').parse()
@@ -628,15 +653,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|baz'
 
@@ -646,15 +673,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|]'
 
@@ -664,15 +693,17 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 6)
         assert r.type is None
-        assert r.target == r.text == u'foo'
-        assert r.target.start == r.text.start == ast.Location(1, 2)
-        assert r.target.end == r.text.end == ast.Location(1, 5)
-        assert r.definition is None
+        assert r.primary == u'foo'
+        assert r.primary.start == ast.Location(1, 2)
+        assert r.primary.end == ast.Location(1, 5)
+        assert r.secondary is None
+        assert r.text is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|'
 
@@ -682,7 +713,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 16)
@@ -690,13 +721,13 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.text.start == ast.Location(1, 2)
         assert r.text.end == ast.Location(1, 5)
-        assert r.target == u'bar'
-        assert r.target.start == ast.Location(1, 7)
-        assert r.target.end == ast.Location(1, 10)
-        assert r.signature == u'baz'
-        assert r.signature.start == ast.Location(1, 12)
-        assert r.signature.end == ast.Location(1, 15)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 7)
+        assert r.primary.end == ast.Location(1, 10)
+        assert r.secondary == u'baz'
+        assert r.secondary.start == ast.Location(1, 12)
+        assert r.secondary.end == ast.Location(1, 15)
+        assert r.metadata == {}
 
     def test_only_with_text_and_definition_missing_paren(self):
         document = Parser.from_string(u'[foo][bar](baz').parse()
@@ -704,7 +735,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 11)
@@ -712,10 +743,11 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.text.start == ast.Location(1, 2)
         assert r.text.end == ast.Location(1, 5)
-        assert r.target == u'bar'
-        assert r.target.start == ast.Location(1, 7)
-        assert r.target.end == ast.Location(1, 10)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 7)
+        assert r.primary.end == ast.Location(1, 10)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(baz'
 
@@ -725,7 +757,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 11)
@@ -733,10 +765,11 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.text.start == ast.Location(1, 2)
         assert r.text.end == ast.Location(1, 5)
-        assert r.target == u'bar'
-        assert r.target.start == ast.Location(1, 7)
-        assert r.target.end == ast.Location(1, 10)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 7)
+        assert r.primary.end == ast.Location(1, 10)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
@@ -746,7 +779,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 11)
@@ -754,10 +787,11 @@ class TestReference(object):
         assert r.text == u'foo'
         assert r.text.start == ast.Location(1, 2)
         assert r.text.end == ast.Location(1, 5)
-        assert r.target == u'bar'
-        assert r.target.start == ast.Location(1, 7)
-        assert r.target.end == ast.Location(1, 10)
-        assert r.definition is None
+        assert r.primary == u'bar'
+        assert r.primary.start == ast.Location(1, 7)
+        assert r.primary.end == ast.Location(1, 10)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
@@ -767,7 +801,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 21)
@@ -777,13 +811,13 @@ class TestReference(object):
         assert r.type == u'bar'
         assert r.type.start == ast.Location(1, 7)
         assert r.type.end == ast.Location(1, 10)
-        assert r.target == u'baz'
-        assert r.target.start == ast.Location(1, 11)
-        assert r.target.end == ast.Location(1, 14)
-        assert r.signature == u'spam'
-        assert r.signature.start == ast.Location(1, 16)
-        assert r.signature.end == ast.Location(1, 20)
-        assert r.definition is None
+        assert r.primary == u'baz'
+        assert r.primary.start == ast.Location(1, 11)
+        assert r.primary.end == ast.Location(1, 14)
+        assert r.secondary == u'spam'
+        assert r.secondary.start == ast.Location(1, 16)
+        assert r.secondary.end == ast.Location(1, 20)
+        assert r.metadata == {}
 
     def test_only_with_text_and_type_and_definition_missing_paren(self):
         document = Parser.from_string(u'[foo][bar|baz](spam').parse()
@@ -791,7 +825,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 15)
@@ -801,10 +835,11 @@ class TestReference(object):
         assert r.type == u'bar'
         assert r.type.start == ast.Location(1, 7)
         assert r.type.end == ast.Location(1, 10)
-        assert r.target == u'baz'
-        assert r.target.start == ast.Location(1, 11)
-        assert r.target.end == ast.Location(1, 14)
-        assert r.definition is None
+        assert r.primary == u'baz'
+        assert r.primary.start == ast.Location(1, 11)
+        assert r.primary.end == ast.Location(1, 14)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(spam'
 
@@ -814,7 +849,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 15)
@@ -824,10 +859,11 @@ class TestReference(object):
         assert r.type == u'bar'
         assert r.type.start == ast.Location(1, 7)
         assert r.type.end == ast.Location(1, 10)
-        assert r.target == u'baz'
-        assert r.target.start == ast.Location(1, 11)
-        assert r.target.end == ast.Location(1, 14)
-        assert r.definition is None
+        assert r.primary == u'baz'
+        assert r.primary.start == ast.Location(1, 11)
+        assert r.primary.end == ast.Location(1, 14)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
@@ -837,7 +873,7 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 2
-        assert isinstance(p.children[0], ast.Reference)
+        assert isinstance(p.children[0], ast.InlineExtension)
         r = p.children[0]
         assert r.start == ast.Location(1, 1)
         assert r.end == ast.Location(1, 15)
@@ -847,10 +883,11 @@ class TestReference(object):
         assert r.type == u'bar'
         assert r.type.start == ast.Location(1, 7)
         assert r.type.end == ast.Location(1, 10)
-        assert r.target == u'baz'
-        assert r.target.start == ast.Location(1, 11)
-        assert r.target.end == ast.Location(1, 14)
-        assert r.definition is None
+        assert r.primary == u'baz'
+        assert r.primary.start == ast.Location(1, 11)
+        assert r.primary.end == ast.Location(1, 14)
+        assert r.secondary is None
+        assert r.metadata == {}
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
@@ -868,18 +905,26 @@ class TestReference(object):
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
-        assert p.children[0].type is None
-        assert p.children[0].target == p.children[0].text == u'foo]bar'
+        assert isinstance(p.children[0], ast.InlineExtension)
+        e = p.children[0]
+        assert e.type is None
+        assert e.primary == u'foo]bar'
+        assert e.secondary is None
+        assert e.text is None
+        assert e.metadata == {}
 
         document = Parser.from_string(u'[foo\|bar|baz]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
         p = document.children[0]
         assert len(p.children) == 1
-        assert isinstance(p.children[0], ast.Reference)
-        assert p.children[0].type == u'foo|bar'
-        assert p.children[0].target == p.children[0].text == u'baz'
+        assert isinstance(p.children[0], ast.InlineExtension)
+        e = p.children[0]
+        assert e.type == u'foo|bar'
+        assert e.primary == u'baz'
+        assert e.secondary is None
+        assert e.text is None
+        assert e.metadata == {}
 
 
 @pytest.mark.parametrize(('string', 'text', 'level'), [
@@ -1261,25 +1306,25 @@ class TestOrderedList(object):
             assert p.children[0].text == text
 
 
-class TestDefinition(object):
+class TestExtension(object):
     def test_simple(self):
         document = Parser.from_string(u'[foo]: bar').parse()
         assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Definition)
+        assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
         assert d.type is None
-        assert d.source == u'foo'
-        assert d.signature == u'bar'
+        assert d.primary == u'foo'
+        assert d.secondary == u'bar'
         assert d.body == []
 
     def test_simple_with_type(self):
         document = Parser.from_string(u'[foo|bar]: baz').parse()
         assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Definition)
+        assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
         assert d.type == u'foo'
-        assert d.source == u'bar'
-        assert d.signature == u'baz'
+        assert d.primary == u'bar'
+        assert d.secondary == u'baz'
         assert d.body == []
 
     def test_simple_with_body(self):
@@ -1291,11 +1336,11 @@ class TestDefinition(object):
             u'blubb'
         ).parse()
         assert len(document.children) == 2
-        assert isinstance(document.children[0], ast.Definition)
+        assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
         assert d.type is None
-        assert d.source == u'foo'
-        assert d.signature == u'bar'
+        assert d.primary == u'foo'
+        assert d.secondary == u'bar'
         assert d.body == [u'hello', u'world']
 
         assert isinstance(document.children[1], ast.Paragraph)

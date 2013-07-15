@@ -20,7 +20,7 @@ from ._compat import implements_iterator, text_type, PY2, iteritems
 # Python 3.3 does not support ur'' syntax
 _header_re = re.compile(br'(#+)\s*(.*)'.decode('utf-8'))
 _ordered_list_item_re = re.compile(br'(\d+\.)\s*(.*)'.decode('utf-8'))
-_definition_re = re.compile(
+_extension_re = re.compile(
     br"""
         \[
         ((?:
@@ -34,7 +34,7 @@ _definition_re = re.compile(
     """.decode('utf-8'),
     re.VERBOSE
 )
-_definition_bracket_re = re.compile(
+_extension_bracket_re = re.compile(
     br"""
         ((?:
             [^\]\|]|
@@ -351,7 +351,7 @@ class Parser(object):
     def parse_block(self, lines):
         parsers = [
             self.parse_header, self.parse_unordered_list,
-            self.parse_ordered_list, self.parse_definition, self.parse_quote,
+            self.parse_ordered_list, self.parse_extension, self.parse_quote,
             self.parse_raw, self.parse_paragraph
         ]
         for parser in parsers:
@@ -405,25 +405,25 @@ class Parser(object):
             self.parse_blocks(lines.unindented(indentation))
         ))
 
-    def parse_definition(self, lines):
+    def parse_extension(self, lines):
         line = next(lines)
-        match = _definition_re.match(line)
+        match = _extension_re.match(line)
         if match is None:
             raise BadPath()
         bracket = match.group(1)
-        signature = match.group(2)
-        match = _definition_bracket_re.match(bracket)
+        secondary = match.group(2)
+        match = _extension_bracket_re.match(bracket)
         if match.group(2) is None:
             type = None
-            source = match.group(1)
+            primary = match.group(1)
         else:
-            type, source = match.groups()
+            type, primary = match.groups()
         body = list(lines.unindented())
         for i in range(len(body) - 1, 0, -1):
             if body[i]:
                 break
             del body[i]
-        return ast.Definition(type, source, signature, body)
+        return ast.Extension(type, primary, secondary=secondary, body=body)
 
     def parse_quote(self, lines):
         rv = ast.BlockQuote()
@@ -454,7 +454,9 @@ class Parser(object):
         if isinstance(tokens, LineIterator):
             tokens = InlineTokenizer(tokens)
         rv = []
-        parsers = [self.parse_strong, self.parse_emphasis, self.parse_reference]
+        parsers = [
+            self.parse_strong, self.parse_emphasis, self.parse_inline_extension
+        ]
         for lexeme, mark in tokens:
             if mark is None:
                 if rv and isinstance(rv[-1], ast.Text):
@@ -513,7 +515,7 @@ class Parser(object):
             raise BadPath()
         return rv
 
-    def parse_reference(self, tokens):
+    def parse_inline_extension(self, tokens):
         # [foo]                => [ None ]
         # [foo|bar]            => [ None |  None ]
         # [foo](bar)           => [ None ]( None )
@@ -524,34 +526,34 @@ class Parser(object):
         # [foo][bar](baz)      => [ None ][ None ]( None )
         start = tokens.expect(['['])[0].start
         regular = [
-            [('text', None), (None, u']['), ('target', None), (None, ']('),
-             ('signature', None), ('end', ')')
+            [('text', None), (None, u']['), ('primary', None), (None, ']('),
+             ('secondary', None), ('end', ')')
             ],
             [('text', None), (None, ']['), ('type', None), (None, '|'),
-             ('target', None), (None, ']('), ('signature', None),
+             ('primary', None), (None, ']('), ('secondary', None),
              ('end', ')')
             ],
             [('text', None), (None, ']['), ('type', None), (None, '|'),
-             ('target', None), ('end', ']')
+             ('primary', None), ('end', ']')
             ],
-            [('text', None), (None, ']['), ('target', None), ('end', ']')],
-            [('type', None), (None, '|'), ('target', None), (None, ']('),
-             ('signature', None), ('end', ')')
+            [('text', None), (None, ']['), ('primary', None), ('end', ']')],
+            [('type', None), (None, '|'), ('primary', None), (None, ']('),
+             ('secondary', None), ('end', ')')
             ],
-            [('target', None), (None, ']('), ('signature', None),
+            [('primary', None), (None, ']('), ('secondary', None),
              ('end', ')')
             ],
-            [('type', None), (None, '|'), ('target', None), ('end', ']')],
-            [('target', None), ('end', ']')]
+            [('type', None), (None, '|'), ('primary', None), ('end', ']')],
+            [('primary', None), ('end', ']')]
         ]
         error = [
-            [('type', None), (None, '|'), ('target', None), ('end', '](')],
+            [('type', None), (None, '|'), ('primary', None), ('end', '](')],
             [('text', None), (None, ']['), ('type', None), (None, '|'),
-             ('target', None), ('end', '](')
+             ('primary', None), ('end', '](')
             ],
-            [('text', None), (None, ']['), ('target', None), ('end', '](')],
-            [('target', None), ('end', '](')],
-            [('target', None), ('end', '][')]
+            [('text', None), (None, ']['), ('primary', None), ('end', '](')],
+            [('primary', None), ('end', '](')],
+            [('primary', None), ('end', '][')]
         ]
         try:
             result = tokens.matches(regular)
@@ -564,6 +566,4 @@ class Parser(object):
             'end': result['end'].end
         })
         result.setdefault('type', None)
-        result.setdefault('text', result['target'])
-        result.setdefault('signature', None)
-        return ast.Reference(**result)
+        return ast.InlineExtension(**result)

@@ -97,44 +97,6 @@ class TestKurrentWriter(WriterTest):
         strong = ast.Strong(children=[ast.Text(u'foo')])
         self.check_node(strong, u'**foo**')
 
-    def test_reference(self):
-        reference = ast.Reference(None, u'foo', u'foo')
-        self.check_node(reference, u'[foo]')
-
-        reference = ast.Reference(u'foo', u'bar', u'bar')
-        self.check_node(reference, u'[foo|bar]')
-
-        reference = ast.Reference(None, u'foo', u'bar')
-        self.check_node(reference, u'[bar][foo]')
-
-        reference = ast.Reference(None, u'foo', u'foo', signature=u'bar')
-        self.check_node(reference, u'[foo](bar)')
-
-        reference = ast.Reference(u'foo', u'bar', u'bar', signature=u'baz')
-        self.check_node(reference, u'[foo|bar](baz)')
-
-        reference = ast.Reference(None, u'foo', u'bar', signature=u'baz')
-        self.check_node(reference, u'[bar][foo](baz)')
-
-        reference = ast.Reference(u'foo', u'bar', u'baz', signature=u'spam')
-        self.check_node(reference, u'[baz][foo|bar](spam)')
-
-    def test_definition(self):
-        definition = ast.Definition(None, u'foo', u'', [])
-        self.check_node(definition, u'[foo]:')
-
-        definition = ast.Definition(None, u'foo', u'bar', [])
-        self.check_node(definition, u'[foo]: bar')
-
-        definition = ast.Definition(u'foo', u'bar', u'', [])
-        self.check_node(definition, u'[foo|bar]:')
-
-        definition = ast.Definition(u'foo', u'bar', u'baz', [])
-        self.check_node(definition, u'[foo|bar]: baz')
-
-        definition = ast.Definition(None, u'foo', u'', [u'hello', u'world'])
-        self.check_node(definition, u'[foo]:\n  hello\n  world')
-
     def test_block_quote(self):
         block_quote = ast.BlockQuote(children=[
             ast.Paragraph(children=[
@@ -245,17 +207,6 @@ class TestHTML5Writer(WriterTest):
     def test_write_strong(self):
         strong = ast.Strong(children=[ast.Text(u'foo')])
         self.check_node(strong, u'<strong>foo</strong>')
-
-    def test_write_reference(self):
-        reference = ast.Reference(None, u'foo', u'foo', signature=u'bar')
-        self.check_node(reference, u'<a href="bar">foo</a>')
-
-        reference = ast.Reference(None, u'foo', u'bar', signature=u'baz')
-        self.check_node(reference, u'<a href="baz">bar</a>')
-
-    def test_doesnt_write_definition(self):
-        definition = ast.Definition(None, u'foo', u'bar', [])
-        self.check_node(definition, u'')
 
     def test_write_block_quote(self):
         block_quote = ast.BlockQuote(children=[

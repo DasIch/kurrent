@@ -10,8 +10,8 @@ import pytest
 
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
-    UnorderedList, OrderedList, ListItem, Reference, Definition, BlockQuote,
-    RawBlock
+    UnorderedList, OrderedList, ListItem, InlineExtension, Extension,
+    BlockQuote, RawBlock
 )
 
 
@@ -315,58 +315,72 @@ class TestListItem(ParentNodeTest):
         return ListItem
 
 
-class TestReference(ASTNodeTest):
+class TestInlineExtension(ASTNodeTest):
     @pytest.fixture
     def node_cls(self):
-        return lambda *args, **kwargs: Reference(
-            'type', 'target', 'text', *args, **kwargs
+        return lambda *args, **kwargs: InlineExtension(
+            'type', 'primary', *args, **kwargs
         )
 
     def test_init(self, node_cls):
-        super(TestReference, self).test_init(node_cls)
+        super(TestInlineExtension, self).test_init(node_cls)
 
-        node = Reference('type', 'target', 'text')
+        node = InlineExtension('type', 'primary')
         assert node.type == 'type'
-        assert node.target == 'target'
-        assert node.text == 'text'
-        assert node.definition is None
+        assert node.primary == 'primary'
+        assert node.secondary is None
+        assert node.text is None
+        assert node.metadata == {}
+        assert node.start is None
+        assert node.end is None
+        assert node.parent is None
 
-        node = Reference('type', 'target', 'text', definition='definition')
+        node = InlineExtension(
+            'type', 'primary', secondary='secondary', text='text',
+            metadata={'spam': 'eggs'}
+        )
         assert node.type == 'type'
-        assert node.target == 'target'
+        assert node.primary == 'primary'
+        assert node.secondary == 'secondary'
         assert node.text == 'text'
-        assert node.definition == 'definition'
+        assert node.metadata == {'spam': 'eggs'}
 
     def test_repr(self):
-        assert repr(Reference('type', 'target', 'text')) == (
-            "Reference("
-                "'type', 'target', 'text', signature=None, definition=None, "
+        assert repr(InlineExtension('type', 'primary')) == (
+            "InlineExtension("
+                "'type', 'primary', secondary=None, text=None, metadata={}, "
                 "start=None, end=None, parent=None"
             ")"
         )
 
 
-class TestDefinition(ASTNodeTest):
+class TestExtension(ASTNodeTest):
     @pytest.fixture
     def node_cls(self):
-        return lambda *args, **kwargs: Definition(
-            'type', 'source', 'signature', [], *args, **kwargs
+        return lambda *args, **kwargs: Extension(
+            'type', 'primary', *args, **kwargs
         )
 
     def test_init(self, node_cls):
-        super(TestDefinition, self).test_init(node_cls)
-        node = Definition('type', 'source', 'signature', [])
+        super(TestExtension, self).test_init(node_cls)
+
+        node = Extension('type', 'primary')
         assert node.type == 'type'
-        assert node.source == 'source'
-        assert node.signature == 'signature'
+        assert node.primary == 'primary'
+        assert node.secondary is None
         assert node.body == []
 
+        node = Extension('type', 'primary', secondary='secondary', body=['foo'])
+        assert node.type == 'type'
+        assert node.primary == 'primary'
+        assert node.secondary == 'secondary'
+        assert node.body == ['foo']
+
     def test_repr(self):
-        assert (
-            repr(Definition('type', 'source', 'signature', [])) ==
-            "Definition("
-                "'type', 'source', 'signature', [], start=None, end=None, "
-                "parent=None"
+        assert repr(Extension('type', 'primary')) == (
+            "Extension("
+                "'type', 'primary', secondary=None, body=[], start=None, "
+                "end=None, parent=None"
             ")"
         )
 

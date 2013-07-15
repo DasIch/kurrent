@@ -159,35 +159,35 @@ class Header(ChildNode):
         )
 
 
-class Reference(ChildNode):
-    def __init__(self, type, target, text, signature=None, definition=None,
+class InlineExtension(ChildNode):
+    def __init__(self, type, primary, secondary=None, text=None, metadata=None,
                  start=None, end=None, parent=None):
-        super(Reference, self).__init__(start=start, end=end, parent=parent)
+        super(InlineExtension, self).__init__(start=start, end=end, parent=parent)
         self.type = type
-        self.target = target
+        self.primary = primary
+        self.secondary = secondary
         self.text = text
-        self.signature = signature
-        self.definition = definition
+        self.metadata = {} if metadata is None else metadata
 
     def __repr__(self):
-        return '%s(%r, %r, %r, signature=%r, definition=%r, start=%r, end=%r, parent=%r)' % (
-            self.__class__.__name__, self.type, self.target, self.text,
-            self.signature, self.definition, self.start, self.end, self.parent
+        return '%s(%r, %r, secondary=%r, text=%r, metadata=%r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.type, self.primary, self.secondary,
+            self.text, self.metadata, self.start, self.end, self.parent
         )
 
 
-class Definition(ChildNode):
-    def __init__(self, type, source, signature, body, start=None, end=None,
-                 parent=None):
-        super(Definition, self).__init__(start=start, end=end, parent=parent)
+class Extension(ChildNode):
+    def __init__(self, type, primary, secondary=None, body=None, start=None,
+                 end=None, parent=None):
+        super(Extension, self).__init__(start=start, end=end, parent=parent)
         self.type = type
-        self.source = source
-        self.signature = signature
-        self.body = body
+        self.primary = primary
+        self.secondary = secondary
+        self.body = [] if body is None else body
 
     def __repr__(self):
-        return '%s(%r, %r, %r, %r, start=%r, end=%r, parent=%r)' % (
-            self.__class__.__name__, self.type, self.source, self.signature,
+        return '%s(%r, %r, secondary=%r, body=%r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.type, self.primary, self.secondary,
             self.body, self.start, self.end, self.parent
         )
 
