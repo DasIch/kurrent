@@ -28,6 +28,8 @@ class TestLocation(object):
         assert not (Location(1, 2) == Location(1, 1))
         assert not (Location(2, 1) == Location(1, 1))
 
+        assert not (Location(1, 1) == None)
+
     def test_ne(self):
         assert Location(1, 1) != Location(1, 2)
         assert Location(1, 1) != Location(2, 1)

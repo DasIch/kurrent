@@ -14,7 +14,9 @@ class Location(object):
         self.column = column
 
     def __eq__(self, other):
-        return self.line == other.line and self.column == other.column
+        if isinstance(other, self.__class__):
+            return self.line == other.line and self.column == other.column
+        return NotImplemented
 
     def __hash__(self):
         return hash((self.line, self.column))
