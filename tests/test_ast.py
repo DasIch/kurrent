@@ -10,7 +10,8 @@ import pytest
 
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
-    UnorderedList, OrderedList, ListItem, Reference, Definition, BlockQuote
+    UnorderedList, OrderedList, ListItem, Reference, Definition, BlockQuote,
+    RawBlock
 )
 
 
@@ -331,3 +332,13 @@ class TestBlockQuote(ParentNodeTest):
     @pytest.fixture
     def node_cls(self):
         return BlockQuote
+
+
+class TestRawBlock(ASTNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return lambda *args, **kwargs: RawBlock([], *args, **kwargs)
+
+    def test_init(self, node_cls):
+        super(TestRawBlock, self).test_init(node_cls)
+        assert RawBlock([]).body == []

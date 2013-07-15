@@ -173,6 +173,6 @@ class BlockQuote(ParentNode):
 
 
 class RawBlock(ChildNode):
-    def __init__(self, body, start=None, end=None):
-        super(RawBlock, self).__init__(start=start, end=end)
+    def __init__(self, body, start=None, end=None, parent=None):
+        super(RawBlock, self).__init__(start=start, end=end, parent=parent)
         self.body = body
