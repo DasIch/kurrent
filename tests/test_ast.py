@@ -171,6 +171,9 @@ class ParentNodeTest(ASTNodeTest):
         assert node.children[0] is replacing
         assert replacing.parent is node
 
+    def test_repr(self, node):
+        assert repr(node) == '%s(children=[], parent=None)' % node.__class__.__name__
+
 
 class TestDocument(ParentNodeTest):
     @pytest.fixture
@@ -223,6 +226,9 @@ class TestDocument(ParentNodeTest):
         assert document.start == Location(1, 1)
         assert document.end == Location(1, 3)
 
+    def test_repr(self):
+        assert repr(Document('foo')) == "Document('foo', metadata={}, children=[], parent=None)"
+
 
 class TestParagraph(ParentNodeTest):
     @pytest.fixture
@@ -247,6 +253,9 @@ class TestText(ASTNodeTest):
     def node_cls(self):
         return lambda *args, **kwargs: Text(u'foo', *args, **kwargs)
 
+    def test_repr(self):
+        assert repr(Text('foo')) == "Text('foo', start=None, end=None, parent=None)"
+
 
 class TestHeader(ASTNodeTest):
     @pytest.fixture
@@ -269,6 +278,9 @@ class TestHeader(ASTNodeTest):
         assert header.parent is None
         assert header.start == Location(1, 1)
         assert header.end == Location(1, 2)
+
+    def test_repr(self):
+        assert repr(Header('foo', 1)) == "Header('foo', 1, start=None, end=None, parent=None)"
 
 
 class TestUnorderedList(ParentNodeTest):
@@ -311,6 +323,9 @@ class TestReference(ASTNodeTest):
         assert node.text == 'text'
         assert node.definition == 'definition'
 
+    def test_repr(self):
+        assert repr(Reference('type', 'target', 'text')) == "Reference('type', 'target', 'text', definition=None, start=None, end=None, parent=None)"
+
 
 class TestDefinition(ASTNodeTest):
     @pytest.fixture
@@ -327,6 +342,9 @@ class TestDefinition(ASTNodeTest):
         assert node.signature == 'signature'
         assert node.body == []
 
+    def test_repr(self):
+        assert repr(Definition('type', 'source', 'signature', [])) == "Definition('type', 'source', 'signature', [], start=None, end=None, parent=None)"
+
 
 class TestBlockQuote(ParentNodeTest):
     @pytest.fixture
@@ -342,3 +360,6 @@ class TestRawBlock(ASTNodeTest):
     def test_init(self, node_cls):
         super(TestRawBlock, self).test_init(node_cls)
         assert RawBlock([]).body == []
+
+    def test_repr(self):
+        assert repr(RawBlock([])) == 'RawBlock([], start=None, end=None, parent=None)'

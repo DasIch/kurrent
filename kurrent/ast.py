@@ -96,12 +96,23 @@ class ParentNode(ASTNode):
             for node in child.traverse():
                 yield node
 
+    def __repr__(self):
+        return '%s(children=%r, parent=%r)' % (
+            self.__class__.__name__, self.children, self.parent
+        )
+
 
 class Document(ParentNode):
     def __init__(self, filename, metadata=None, children=None, parent=None):
         super(Document, self).__init__(children=children, parent=parent)
         self.filename = filename
         self.metadata = {} if metadata is None else metadata
+
+    def __repr__(self):
+        return '%s(%r, metadata=%r, children=%r, parent=%r)' % (
+            self.__class__.__name__, self.filename, self.metadata,
+            self.children, self.parent
+        )
 
 
 class Paragraph(ParentNode):
@@ -128,12 +139,24 @@ class Text(ChildNode):
         super(Text, self).__init__(start=start, end=end, parent=parent)
         self.text = text
 
+    def __repr__(self):
+        return '%s(%r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.text, self.start, self.end,
+            self.parent
+        )
+
 
 class Header(ChildNode):
     def __init__(self, text, level, start=None, end=None, parent=None):
         super(Header, self).__init__(start=start, end=end, parent=parent)
         self.text = text
         self.level = level
+
+    def __repr__(self):
+        return '%s(%r, %r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.text, self.level, self.start,
+            self.end, self.parent
+        )
 
 
 class Reference(ChildNode):
@@ -145,6 +168,12 @@ class Reference(ChildNode):
         self.text = text
         self.definition = definition
 
+    def __repr__(self):
+        return '%s(%r, %r, %r, definition=%r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.type, self.target, self.text,
+            self.definition, self.start, self.end, self.parent
+        )
+
 
 class Definition(ChildNode):
     def __init__(self, type, source, signature, body, start=None, end=None,
@@ -154,6 +183,12 @@ class Definition(ChildNode):
         self.source = source
         self.signature = signature
         self.body = body
+
+    def __repr__(self):
+        return '%s(%r, %r, %r, %r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.type, self.source, self.signature,
+            self.body, self.start, self.end, self.parent
+        )
 
 
 class UnorderedList(ParentNode):
@@ -176,3 +211,9 @@ class RawBlock(ChildNode):
     def __init__(self, body, start=None, end=None, parent=None):
         super(RawBlock, self).__init__(start=start, end=end, parent=parent)
         self.body = body
+
+    def __repr__(self):
+        return '%s(%r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.body, self.start, self.end,
+            self.parent
+        )
