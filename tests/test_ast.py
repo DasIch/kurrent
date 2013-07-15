@@ -81,9 +81,19 @@ class TestLocation(object):
 
 class ASTNodeTest(object):
     @pytest.fixture
-    def nodes(self):
+    def node(self, node_cls):
+        return node_cls()
+
+    @pytest.fixture
+    def nodes(self, node_cls):
         while True:
-            yield self.node()
+            yield node_cls()
+
+    def test_init(self, node_cls):
+        assert node_cls().parent is None
+        parent = Document('test')
+        node = node_cls(parent=parent)
+        assert node.parent is parent
 
     def test_replace_in_parent(self, nodes):
         document = Document('test')
@@ -96,30 +106,66 @@ class ASTNodeTest(object):
 
 
 class ParentNodeTest(ASTNodeTest):
+    def test_init(self, node_cls):
+        super(ParentNodeTest, self).test_init(node_cls)
+        node = node_cls()
+        assert node.children == []
+        assert node.start is None
+        assert node.end is None
+
+        a = Text(u'foo', start=Location(1, 1), end=Location(1, 4))
+        b = Text(u'bar', start=Location(2, 1), end=Location(2, 4))
+        node = node_cls(children=[a, b])
+        assert node.children == [a, b]
+        assert a.parent is node
+        assert b.parent is node
+        assert node.start == Location(1, 1)
+        assert node.end == Location(2, 4)
+
+    def test_start(self, node):
+        assert node.start is None
+        node.start = Location(1, 1)
+        assert node.start == Location(1, 1)
+
+    def test_end(self, node):
+        assert node.end is None
+        node.end = Location(2, 1)
+        assert node.end == Location(2, 1)
+
     def test_add_child(self, node):
         assert not node.children
-        child = Text(u'foo')
+        assert node.start is None
+        assert node.end is None
+        child = Text(u'foo', start=Location(1, 1), end=Location(1, 4))
         assert child.parent is None
         node.add_child(child)
         assert node.children[0] is child
         assert child.parent is node
+        assert node.start == Location(1, 1)
+        assert node.end == Location(1, 4)
 
     def test_add_children(self, node):
         assert not node.children
-        a = Text(u'foo')
-        b = Text(u'bar')
+        a = Text(u'foo', start=Location(1, 1), end=Location(1, 4))
+        b = Text(u'bar', start=Location(2, 1), end=Location(2, 4))
         node.add_children([a, b])
         assert len(node.children) == 2
         assert node.children[0] is a
         assert a.parent is node
         assert node.children[1] is b
         assert b.parent is node
+        assert node.start == Location(1, 1)
+        assert node.end == Location(2, 4)
 
     def test_replace(self, node):
-        to_be_replaced = Text(u'foo')
-        replacing = Text(u'bar')
+        to_be_replaced = Text(u'foo', start=Location(1, 1), end=Location(1, 4))
+        replacing = Text(u'bar', start=Location(2, 1), end=Location(2, 4))
         node.add_child(to_be_replaced)
+        assert node.start == Location(1, 1)
+        assert node.end == Location(1, 4)
         node.replace(to_be_replaced, replacing)
+        assert node.start == Location(2, 1)
+        assert node.end == Location(2, 4)
         assert len(node.children) == 1
         assert node.children[0] is replacing
         assert replacing.parent is node
@@ -127,10 +173,11 @@ class ParentNodeTest(ASTNodeTest):
 
 class TestDocument(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return Document('foo')
+    def node_cls(self):
+        return lambda *args, **kwargs: Document('foo', *args, **kwargs)
 
-    def test_init(self):
+    def test_init(self, node_cls):
+        super(TestDocument, self).test_init(node_cls)
         document = Document('foo')
         assert document.filename == 'foo'
         assert document.metadata == {}
@@ -178,98 +225,39 @@ class TestDocument(ParentNodeTest):
 
 class TestParagraph(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return Paragraph()
-
-    def test_init(self):
-        paragraph = Paragraph()
-        assert paragraph.children == []
-        assert paragraph.parent is None
-        assert paragraph.start is None
-        assert paragraph.end is None
-
-        paragraph = Paragraph(children=[
-            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
-            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
-        ])
-        assert len(paragraph.children) == 2
-        for child in paragraph.children:
-            assert child.parent is paragraph
-        assert paragraph.parent is None
-        assert paragraph.start == Location(1, 1)
-        assert paragraph.end == Location(1, 3)
+    def node_cls(self):
+        return Paragraph
 
 
 class TestEmphasis(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return Emphasis()
-
-    def test_init(self):
-        emphasis = Emphasis()
-        assert emphasis.children == []
-        assert emphasis.parent is None
-        assert emphasis.start is None
-        assert emphasis.end is None
-
-        emphasis = Emphasis(children=[
-            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
-            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
-        ])
-        assert len(emphasis.children) == 2
-        for child in emphasis.children:
-            assert child.parent is emphasis
-        assert emphasis.parent is None
-        assert emphasis.start == Location(1, 1)
-        assert emphasis.end == Location(1, 3)
+    def node_cls(self):
+        return Emphasis
 
 
 class TestStrong(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return Strong()
-
-    def test_init(self):
-        strong = Strong()
-        assert strong.children == []
-        assert strong.parent is None
-        assert strong.start is None
-        assert strong.end is None
-
-        strong = Strong(children=[
-            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
-            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
-        ])
-        assert len(strong.children) == 2
-        for child in strong.children:
-            assert child.parent is strong
-        assert strong.parent is None
-        assert strong.start == Location(1, 1)
-        assert strong.end == Location(1, 3)
+    def node_cls(self):
+        return Strong
 
 
 class TestText(ASTNodeTest):
     @pytest.fixture
-    def node(self):
-        return Text(u'foo')
-
-    def test_init(self):
-        text = Text(u'foo')
-        assert text.text == u'foo'
-
-        text = Text(u'foo', start=Location(1, 1), end=Location(1, 2))
-        assert text.text == u'foo'
-        assert text.parent is None
-        assert text.start == Location(1, 1)
-        assert text.end == Location(1, 2)
+    def node_cls(self):
+        return lambda *args, **kwargs: Text(u'foo', *args, **kwargs)
 
 
 class TestHeader(ASTNodeTest):
     @pytest.fixture
-    def node(self):
-        return Header(u'foo', 1)
+    def node_cls(self):
+        return lambda *args, **kwargs: Header(u'foo', 1, *args, **kwargs)
 
-    def test_init(self):
+    @pytest.fixture
+    def node(self, node_cls):
+        return node_cls()
+
+    def test_init(self, node_cls):
+        super(TestHeader, self).test_init(node_cls)
         header = Header(u'foo', 1)
         assert header.text == u'foo'
         assert header.level == 1
@@ -284,73 +272,17 @@ class TestHeader(ASTNodeTest):
 
 class TestUnorderedList(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return UnorderedList()
-
-    def test_init(self):
-        unordered_list = UnorderedList()
-        assert unordered_list.children == []
-        assert unordered_list.parent is None
-        assert unordered_list.start is None
-        assert unordered_list.end is None
-
-        unordered_list = UnorderedList(children=[
-            ListItem(children=[
-                Text(u'foo', start=Location(1, 1), end=Location(1, 2))
-            ]),
-            ListItem(children=[
-                Text(u'bar', start=Location(2, 1), end=Location(2, 2))
-            ])
-        ])
-        assert len(unordered_list.children) == 2
-        for child in unordered_list.children:
-            assert child.parent is unordered_list
-        assert unordered_list.start == Location(1, 1)
-        assert unordered_list.end == Location(2, 2)
+    def node_cls(self):
+        return UnorderedList
 
 
 class TestOrderedList(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return OrderedList()
-
-    def test_init(self):
-        ordered_list = OrderedList()
-        assert ordered_list.children == []
-        assert ordered_list.parent is None
-        assert ordered_list.start is None
-        assert ordered_list.end is None
-
-        ordered_list = OrderedList(children=[
-            ListItem(children=[
-                Text(u'foo', start=Location(1, 1), end=Location(1, 2))
-            ]),
-            ListItem(children=[
-                Text(u'bar', start=Location(2, 1), end=Location(2, 2))
-            ])
-        ])
-        assert len(ordered_list.children) == 2
-        for child in ordered_list.children:
-            assert child.parent is ordered_list
-        assert ordered_list.start == Location(1, 1)
-        assert ordered_list.end == Location(2, 2)
+    def node_cls(self):
+        return OrderedList
 
 
 class TestListItem(ParentNodeTest):
     @pytest.fixture
-    def node(self):
-        return ListItem()
-
-    def test_init(self):
-        list_item = ListItem()
-        assert list_item.children == []
-
-        list_item = ListItem(children=[
-            Text(u'foo', start=Location(1, 1), end=Location(1, 2)),
-            Text(u'bar', start=Location(1, 2), end=Location(1, 3))
-        ])
-        assert len(list_item.children) == 2
-        for child in list_item.children:
-            assert child.parent is list_item
-        assert list_item.start == Location(1, 1)
-        assert list_item.end == Location(1, 3)
+    def node_cls(self):
+        return ListItem

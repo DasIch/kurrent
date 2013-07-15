@@ -98,8 +98,8 @@ class ParentNode(ASTNode):
 
 
 class Document(ParentNode):
-    def __init__(self, filename, metadata=None, children=None):
-        super(Document, self).__init__(children=children)
+    def __init__(self, filename, metadata=None, children=None, parent=None):
+        super(Document, self).__init__(children=children, parent=parent)
         self.filename = filename
         self.metadata = {} if metadata is None else metadata
 
@@ -124,14 +124,14 @@ class ChildNode(ASTNode):
 
 
 class Text(ChildNode):
-    def __init__(self, text, start=None, end=None):
-        super(Text, self).__init__(start=start, end=end)
+    def __init__(self, text, start=None, end=None, parent=None):
+        super(Text, self).__init__(start=start, end=end, parent=parent)
         self.text = text
 
 
 class Header(ChildNode):
-    def __init__(self, text, level, start=None, end=None):
-        super(Header, self).__init__(start=start, end=end)
+    def __init__(self, text, level, start=None, end=None, parent=None):
+        super(Header, self).__init__(start=start, end=end, parent=parent)
         self.text = text
         self.level = level
 
