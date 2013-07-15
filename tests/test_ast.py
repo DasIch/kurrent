@@ -10,7 +10,7 @@ import pytest
 
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
-    UnorderedList, OrderedList, ListItem
+    UnorderedList, OrderedList, ListItem, Reference
 )
 
 
@@ -286,3 +286,26 @@ class TestListItem(ParentNodeTest):
     @pytest.fixture
     def node_cls(self):
         return ListItem
+
+
+class TestReference(ASTNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return lambda *args, **kwargs: Reference(
+            'type', 'target', 'text', *args, **kwargs
+        )
+
+    def test_init(self, node_cls):
+        super(TestReference, self).test_init(node_cls)
+
+        node = Reference('type', 'target', 'text')
+        assert node.type == 'type'
+        assert node.target == 'target'
+        assert node.text == 'text'
+        assert node.definition is None
+
+        node = Reference('type', 'target', 'text', definition='definition')
+        assert node.type == 'type'
+        assert node.target == 'target'
+        assert node.text == 'text'
+        assert node.definition == 'definition'
