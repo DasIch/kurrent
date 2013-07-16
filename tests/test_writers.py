@@ -555,3 +555,31 @@ class TestManWriter(WriterTest):
             u'.RE\n'
             u'.RE'
         )
+
+    def test_write_definition_list(self):
+        dl = ast.DefinitionList(children=[
+            ast.Definition(
+                [ast.Text(u'foo')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'bar')
+                ])]
+            ),
+            ast.Definition(
+                [ast.Text(u'spam')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'eggs')
+                ])]
+            )
+        ])
+        self.check_node(dl,
+            u'.P\n'
+            u'foo\n'
+            u'.RS 4\n'
+            u'bar\n'
+            u'.RE\n'
+            u'.P\n'
+            u'spam\n'
+            u'.RS 4\n'
+            u'eggs\n'
+            u'.RE'
+        )

@@ -90,15 +90,18 @@ class Translator(object):
     def translate(self, node):
         return getattr(self, 'translate_%s' % node.__class__.__name__)(node)
 
-    def translate_children(self, node):
+    def translate_nodes(self, nodes):
         rv = []
-        for child in node.children:
+        for child in nodes:
             translated = self.translate(child)
             if hasattr(translated, '__iter__'):
                 rv.extend(translated)
             else:
                 rv.append(translated)
         return rv
+
+    def translate_children(self, node):
+        return self.translate_nodes(node.children)
 
     def translate_Document(self, node):
         return Document(
@@ -153,6 +156,19 @@ class Translator(object):
                 indentation=2,
                 children=self.translate_children(item)
             )
+
+    def translate_DefinitionList(self, node):
+        return self.translate_children(node)
+
+    def translate_Definition(self, node):
+        yield Paragraph(children=self.translate_nodes(node.term))
+        description = Indentation(
+            4,
+            children=self.translate_nodes(node.description)
+        )
+        if isinstance(description.children[0], Paragraph):
+            description.children[0].transparent = True
+        yield description
 
 
 translate = Translator().translate
