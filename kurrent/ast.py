@@ -6,6 +6,7 @@
     :copyright: 2013 by Daniel Neuhäuser
     :license: BSD, see LICENSE.rst for details
 """
+from itertools import chain
 
 
 class Location(object):
@@ -217,4 +218,34 @@ class RawBlock(ChildNode):
         return '%s(%r, start=%r, end=%r, parent=%r)' % (
             self.__class__.__name__, self.body, self.start, self.end,
             self.parent
+        )
+
+
+class DefinitionList(ParentNode):
+    pass
+
+
+class Definition(ASTNode):
+    def __init__(self, term, description, parent=None):
+        super(Definition, self).__init__(parent=parent)
+        self.term = term
+        self.description = description
+
+    @property
+    def start(self):
+        return self.term[0].start
+
+    @property
+    def end(self):
+        return self.description[-1].end
+
+    def traverse(self):
+        yield self
+        for child in chain(self.term, self.description):
+            for grandchild in child.traverse():
+                yield grandchild
+
+    def __repr__(self):
+        return '%s(%r, %r, parent=%r)' % (
+            self.__class__.__name__, self.term, self.description, self.parent
         )

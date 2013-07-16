@@ -285,10 +285,10 @@ class LineIterator(TransactionIterator):
             try:
                 line = self.lookahead(silent=False)[0]
             except StopIteration:
-                return []
+                return LineIterator([], self.lineno, self.columnno)
             spaces = len(line) - len(line.lstrip())
             if not spaces:
-                return []
+                return LineIterator([], self.lineno, self.columnno)
         def inner():
             for line in self:
                 if line:
@@ -352,7 +352,7 @@ class Parser(object):
         parsers = [
             self.parse_header, self.parse_unordered_list,
             self.parse_ordered_list, self.parse_extension, self.parse_quote,
-            self.parse_raw, self.parse_paragraph
+            self.parse_definition_list, self.parse_raw, self.parse_paragraph
         ]
         for parser in parsers:
             with lines.transaction():
@@ -404,6 +404,24 @@ class Parser(object):
         return ast.ListItem(children=list(
             self.parse_blocks(lines.unindented(indentation))
         ))
+
+    def parse_definition_list(self, lines):
+        rv = ast.DefinitionList()
+        for line in lines:
+            if line.startswith(u' '):
+                lines.push(line)
+                break
+            term = list(self.parse_inline(
+                LineIterator([line], line.lineno - 1, line.columnno)
+            ))
+            description = list(self.parse_blocks(lines.unindented()))
+            if not description:
+                lines.push(line)
+                break
+            rv.add_child(ast.Definition(term, description))
+        if rv.children:
+            return rv
+        raise BadPath()
 
     def parse_extension(self, lines):
         line = next(lines)

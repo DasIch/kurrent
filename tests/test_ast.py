@@ -11,7 +11,7 @@ import pytest
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
     UnorderedList, OrderedList, ListItem, InlineExtension, Extension,
-    BlockQuote, RawBlock
+    BlockQuote, RawBlock, DefinitionList, Definition
 )
 
 
@@ -405,3 +405,43 @@ class TestRawBlock(ASTNodeTest):
             repr(RawBlock([])) ==
             'RawBlock([], start=None, end=None, parent=None)'
         )
+
+
+class TestDefinitionList(ParentNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return DefinitionList
+
+
+class TestDefinition(ASTNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return lambda *args, **kwargs: Definition([], [], *args, **kwargs)
+
+    def test_init(self, node_cls):
+        super(TestDefinition, self).test_init(node_cls)
+        node = Definition(['term'], ['description'])
+        assert node.term == ['term']
+        assert node.description == ['description']
+
+    def test_start(self):
+        node = Definition([Text(u'foo', start=Location(1, 1))], [])
+        assert node.start == Location(1, 1)
+
+    def test_end(self):
+        node = Definition([], [Text(u'foo', end=Location(1, 4))])
+        assert node.end == Location(1, 4)
+
+    def test_traverse(self):
+        node = Definition([Text('a'), Text('b')], [Text('c'), Text('d')])
+        traversal = node.traverse()
+        assert next(traversal) is node
+        assert next(traversal).text == 'a'
+        assert next(traversal).text == 'b'
+        assert next(traversal).text == 'c'
+        assert next(traversal).text == 'd'
+        with pytest.raises(StopIteration):
+            next(traversal)
+
+    def test_repr(self):
+        assert repr(Definition([], [])) == 'Definition([], [], parent=None)'

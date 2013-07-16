@@ -1017,12 +1017,54 @@ class TestUnorderedList(object):
         document = Parser.from_string(u'- foo\n'
                                       u' bar\n'
                                       u'- baz').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
+        assert len(document.children) == 2
+        assert document.start == ast.Location(1, 1)
+        assert document.end == ast.Location(3, 6)
+
+        assert isinstance(document.children[0], ast.DefinitionList)
+        dl = document.children[0]
+        assert dl.start == ast.Location(1, 1)
+        assert dl.end == ast.Location(2, 5)
+        assert len(dl.children) == 1
+        assert isinstance(dl.children[0], ast.Definition)
+        d = dl.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(2, 5)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Text)
+        assert d.term[0].text == u'- foo'
+        assert d.term[0].start == ast.Location(1, 1)
+        assert d.term[0].end == ast.Location(1, 6)
+        assert len(d.description) == 1
+        assert isinstance(d.description[0], ast.Paragraph)
+        p = d.description[0]
+        assert p.start == ast.Location(2, 2)
+        assert p.end == ast.Location(2, 5)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'- foo  bar - baz'
+        assert p.children[0].text == u'bar'
+        assert p.children[0].start == ast.Location(2, 2)
+        assert p.children[0].end == ast.Location(2, 5)
+
+        assert isinstance(document.children[1], ast.UnorderedList)
+        ul = document.children[1]
+        assert ul.start == ast.Location(3, 1)
+        assert ul.end == ast.Location(3, 6)
+        assert len(ul.children) == 1
+        assert isinstance(ul.children[0], ast.ListItem)
+        li = ul.children[0]
+        assert li.start == ast.Location(3, 1)
+        assert li.end == ast.Location(3, 6)
+        assert len(li.children) == 1
+        assert isinstance(li.children[0], ast.Paragraph)
+        p = li.children[0]
+        assert p.start == ast.Location(3, 3)
+        assert p.end == ast.Location(3, 6)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
+        assert p.children[0].start == ast.Location(3, 3)
+        assert p.children[0].end == ast.Location(3, 6)
 
     def test_nested(self):
         document = Parser.from_string(u'- - foo\n'
@@ -1199,12 +1241,52 @@ class TestOrderedList(object):
         document = Parser.from_string(u'1. foo\n'
                                       u'  bar\n'
                                       u'2. baz').parse()
-        assert len(document.children) == 1
-        assert isinstance(document.children[0], ast.Paragraph)
-        p = document.children[0]
+        assert len(document.children) == 2
+
+        assert isinstance(document.children[0], ast.DefinitionList)
+        dl = document.children[0]
+        assert dl.start == ast.Location(1, 1)
+        assert dl.end == ast.Location(2, 6)
+        assert len(dl.children) == 1
+        assert isinstance(dl.children[0], ast.Definition)
+        d = dl.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(2, 6)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Text)
+        assert d.term[0].text == u'1. foo'
+        assert d.term[0].start == ast.Location(1, 1)
+        assert d.term[0].end == ast.Location(1, 7)
+        assert len(d.description) == 1
+        assert isinstance(d.description[0], ast.Paragraph)
+        p = d.description[0]
+        assert p.start == ast.Location(2, 3)
+        assert p.end == ast.Location(2, 6)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
-        assert p.children[0].text == u'1. foo   bar 2. baz'
+        assert p.children[0].text == u'bar'
+        assert p.children[0].start == ast.Location(2, 3)
+        assert p.children[0].end == ast.Location(2, 6)
+
+        assert isinstance(document.children[1], ast.OrderedList)
+        ul = document.children[1]
+        assert ul.start == ast.Location(3, 1)
+        assert ul.end == ast.Location(3, 7)
+        assert len(ul.children) == 1
+        assert isinstance(ul.children[0], ast.ListItem)
+        li = ul.children[0]
+        assert li.start == ast.Location(3, 1)
+        assert li.end == ast.Location(3, 7)
+        assert len(li.children) == 1
+        assert isinstance(li.children[0], ast.Paragraph)
+        p = li.children[0]
+        assert p.start == ast.Location(3, 4)
+        assert p.end == ast.Location(3, 7)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'baz'
+        assert p.children[0].start == ast.Location(3, 4)
+        assert p.children[0].end == ast.Location(3, 7)
 
     def test_nested(self):
         document = Parser.from_string(u'1. 1. foo\n'
@@ -1418,3 +1500,116 @@ class TestRawBlock(object):
         assert r.start == ast.Location(1, 2)
         assert r.end == ast.Location(1, 14)
         assert r.body == [u'this is code']
+
+
+class TestDefinitionList(object):
+    def test_simple(self):
+        document = Parser.from_string(
+            u'term\n'
+            u'  definition\n'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.DefinitionList)
+        dl = document.children[0]
+        assert dl.start == ast.Location(1, 1)
+        assert dl.end == ast.Location(2, 13)
+        assert len(dl.children) == 1
+        assert isinstance(dl.children[0], ast.Definition)
+        d = dl.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(2, 13)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Text)
+        assert d.term[0].text == u'term'
+        assert d.term[0].start == ast.Location(1, 1)
+        assert d.term[0].end == ast.Location(1, 5)
+        assert len(d.description) == 1
+        assert isinstance(d.description[0], ast.Paragraph)
+        p = d.description[0]
+        assert p.start == ast.Location(2, 3)
+        assert p.end == ast.Location(2, 13)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].text == u'definition'
+        assert p.children[0].start == ast.Location(2, 3)
+        assert p.children[0].end == ast.Location(2, 13)
+
+    def test_inline_markup_in_term(self):
+        document = Parser.from_string(
+            u'*term*\n'
+            u'  description'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.DefinitionList)
+        dl = document.children[0]
+        assert dl.start == ast.Location(1, 1)
+        assert dl.end == ast.Location(2, 14)
+        assert len(dl.children) == 1
+        assert isinstance(dl.children[0], ast.Definition)
+        d = dl.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(2, 14)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Emphasis)
+        e = d.term[0]
+        assert e.start == ast.Location(1, 1)
+        assert e.end == ast.Location(1, 7)
+        assert len(e.children) == 1
+        assert isinstance(e.children[0], ast.Text)
+        assert e.children[0].start == ast.Location(1, 2)
+        assert e.children[0].end == ast.Location(1, 6)
+        assert e.children[0].text == u'term'
+
+    def test_multiple_items(self):
+        document = Parser.from_string(
+            u'term\n'
+            u'  description\n'
+            u'\n'
+            u'another term\n'
+            u'  another description'
+        ).parse()
+        assert len(document.children) == 1
+        assert isinstance(document.children[0], ast.DefinitionList)
+        dl = document.children[0]
+        assert dl.start == ast.Location(1, 1)
+        assert dl.end == ast.Location(5, 22)
+        assert len(dl.children) == 2
+        assert all(isinstance(child, ast.Definition) for child in dl.children)
+
+        d = dl.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(2, 14)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Text)
+        assert d.term[0].text == u'term'
+        assert d.term[0].start == ast.Location(1, 1)
+        assert d.term[0].end == ast.Location(1, 5)
+        assert len(d.description) == 1
+        assert isinstance(d.description[0], ast.Paragraph)
+        p = d.description[0]
+        assert p.start == ast.Location(2, 3)
+        assert p.end == ast.Location(2, 14)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].start == ast.Location(2, 3)
+        assert p.children[0].end == ast.Location(2, 14)
+        assert p.children[0].text == u'description'
+
+        d = dl.children[1]
+        assert d.start == ast.Location(4, 1)
+        assert d.end == ast.Location(5, 22)
+        assert len(d.term) == 1
+        assert isinstance(d.term[0], ast.Text)
+        assert d.term[0].text == u'another term'
+        assert d.term[0].start == ast.Location(4, 1)
+        assert d.term[0].end == ast.Location(4, 13)
+        assert len(d.description) == 1
+        assert isinstance(d.description[0], ast.Paragraph)
+        p = d.description[0]
+        assert p.start == ast.Location(5, 3)
+        assert p.end == ast.Location(5, 22)
+        assert len(p.children) == 1
+        assert isinstance(p.children[0], ast.Text)
+        assert p.children[0].start == ast.Location(5, 3)
+        assert p.children[0].end == ast.Location(5, 22)
+        assert p.children[0].text == u'another description'
