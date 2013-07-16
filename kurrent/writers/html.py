@@ -62,18 +62,6 @@ class HTML5Writer(Writer):
         ))
         yield True
 
-    def write_Reference(self, node):
-        self.write(u'<a href="')
-        self.write(node.signature)
-        self.write(u'">')
-        self.write(escape(node.text))
-        self.write(u'</a>')
-        self.newline()
-
-    def write_Definition(self, node):
-        # prevents NotImplementedError, we ignore Definitions
-        pass
-
     def write_RawBlock(self, node):
         self.write_line(u'<pre>')
         indent_stack = self.indent_stack
