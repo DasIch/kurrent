@@ -70,7 +70,8 @@ class InlineTokenizer(TransactionIterator):
             escaped(u'(\*)'),
             escaped(u'(\[)'),
             (u'(\[)', u'[', 'push_state', 'reference'),
-            escaped(u'(\])')
+            escaped(u'(\])'),
+            escaped(u'(\-)')
         ],
         'reference': [
             (u'(\]\()', u']('),
