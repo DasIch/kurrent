@@ -12,8 +12,10 @@ env:
   - REQUIREMENTS=devel
 
 install:
-  - pip install --src src --requirement .travis-$REQUIREMENTS-requirements.txt
-  - pip install --src src --editable .
+  - pip install --requirement .travis-$REQUIREMENTS-requirements.txt
+  - pip install --editable git+https://github.com/mitsuhiko/babel.git#egg=Babel
+  - pip install --editable .
+  - python $VIRTUAL_ENV/src/babel/scripts/download_import_cldr.py
   - python src/babel/scripts/download_install_cldr.py
 
 script: make test
