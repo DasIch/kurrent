@@ -13,7 +13,7 @@ env:
 
 install:
   - pip install -r .travis-$REQUIREMENTS-requirements.txt
-  - pip install --editable .
+  - pip install --editable --src src .
   - python src/babel/scripts/download_install_cldr.py
 
 script: make test
