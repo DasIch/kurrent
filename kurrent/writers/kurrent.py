@@ -126,21 +126,6 @@ class KurrentWriter(Writer):
         with self.indent(u' ' * 4):
             self.write_lines(node.body)
 
-    def write_Definition(self, node):
-        self.write(u'[')
-        if node.type is not None:
-            self.write(node.type)
-            self.write(u'|')
-        self.write(node.source)
-        self.write(u']:')
-        if node.signature:
-            self.write(u' ')
-            self.write(node.signature)
-        with self.indent(u'  '):
-            self.newline()
-            self.write_lines(node.body)
-        self.write_block_newline()
-
     @contextmanager
     def write_BlockQuote(self, node):
         self.write(u'> ')
