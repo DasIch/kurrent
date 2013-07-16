@@ -400,6 +400,24 @@ class TestManWriter(WriterTest):
                         ast.Text(u'a list item in an ordered list')
                     ])
                 ])
+            ]),
+            ast.BlockQuote(children=[
+                ast.Paragraph(children=[
+                    ast.Text(u'something quoted')
+                ])
+            ]),
+            ast.DefinitionList(children=[
+                ast.Definition(
+                    [ast.Text(u'foobar')],
+                    [
+                        ast.Paragraph(children=[
+                            ast.Text(u'spam')
+                        ]),
+                        ast.Paragraph(children=[
+                            ast.Text(u'eggs')
+                        ])
+                    ]
+                )
             ])
         ])
 
