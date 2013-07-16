@@ -166,8 +166,8 @@ def fold(node):
     elif isinstance(node, HangingIndentation):
         if node.children:
             if isinstance(node.children[0], HangingIndentation):
-                child_indent = node.children.pop(0)
-                if node.id != child_indent.id:
+                if node.id != node.children[0].id:
+                    child_indent = node.children.pop(0)
                     node.designator += child_indent.designator
                     node.children = (
                         child_indent.children +
