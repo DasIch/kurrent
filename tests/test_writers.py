@@ -198,6 +198,29 @@ class TestKurrentWriter(WriterTest):
             u'    bar'
         )
 
+    def test_write_definition_list(self):
+        dl = ast.DefinitionList(children=[
+            ast.Definition(
+                [ast.Text(u'foo')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'bar')
+                ])]
+            ),
+            ast.Definition(
+                [ast.Text(u'spam')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'eggs')
+                ])]
+            )
+        ])
+        self.check_node(dl,
+            u'foo\n'
+            u'  bar\n'
+            u'\n'
+            u'spam\n'
+            u'  eggs'
+        )
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer

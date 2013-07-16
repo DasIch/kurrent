@@ -138,3 +138,11 @@ class KurrentWriter(Writer):
         for line in node.body:
             self.write_line(u' ' * 4 + line)
         self.write_block_newline()
+
+    def write_Definition(self, node):
+        for child in node.term:
+            self.write_node(child)
+        self.newline()
+        with self.indent(u' ' * 2):
+            for child in node.description:
+                self.write_node(child)
