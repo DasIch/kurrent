@@ -128,6 +128,76 @@ class TestKurrentWriter(WriterTest):
             u'    bar'
         )
 
+    def test_write_inline_extension(self):
+        e = ast.InlineExtension(None, u'primary')
+        self.check_node(e, u'[primary]')
+
+        e = ast.InlineExtension(u'type', u'primary')
+        self.check_node(e, u'[type|primary]')
+
+        e = ast.InlineExtension(None, u'primary', text=u'text')
+        self.check_node(e, u'[text][primary]')
+
+        e = ast.InlineExtension(u'type', u'primary', text=u'text')
+        self.check_node(e, u'[text][type|primary]')
+
+        e = ast.InlineExtension(None, u'primary', secondary=u'secondary')
+        self.check_node(e, u'[primary](secondary)')
+
+        e = ast.InlineExtension(u'type', u'primary', secondary=u'secondary')
+        self.check_node(e, u'[type|primary](secondary)')
+
+        e = ast.InlineExtension(
+            None, u'primary', secondary=u'secondary', text=u'text'
+        )
+        self.check_node(e, u'[text][primary](secondary)')
+
+        e = ast.InlineExtension(
+            u'type', u'primary', secondary=u'secondary', text=u'text'
+        )
+        self.check_node(e, u'[text][type|primary](secondary)')
+
+    def test_write_extension(self):
+        e = ast.Extension(None, u'primary')
+        self.check_node(e, u'[primary]:')
+
+        e = ast.Extension(u'type', u'primary')
+        self.check_node(e, u'[type|primary]:')
+
+        e = ast.Extension(None, u'primary', secondary=u'secondary')
+        self.check_node(e, u'[primary]: secondary')
+
+        e = ast.Extension(u'type', u'primary', secondary=u'secondary')
+        self.check_node(e, u'[type|primary]: secondary')
+
+        e = ast.Extension(None, u'primary', body=[u'foo', u'bar'])
+        self.check_node(e,
+            u'[primary]:\n'
+            u'    foo\n'
+            u'    bar'
+        )
+
+        e = ast.Extension(u'type', u'primary', body=[u'foo', u'bar'])
+        self.check_node(e,
+            u'[type|primary]:\n'
+            u'    foo\n'
+            u'    bar'
+        )
+
+        e = ast.Extension(None, u'primary', secondary=u'secondary', body=[u'foo', u'bar'])
+        self.check_node(e,
+            u'[primary]: secondary\n'
+            u'    foo\n'
+            u'    bar'
+        )
+
+        e = ast.Extension(u'type', u'primary', secondary=u'secondary', body=[u'foo', u'bar'])
+        self.check_node(e,
+            u'[type|primary]: secondary\n'
+            u'    foo\n'
+            u'    bar'
+        )
+
 
 class TestHTML5Writer(WriterTest):
     writer_cls = HTML5Writer

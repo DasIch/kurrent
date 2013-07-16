@@ -97,20 +97,34 @@ class KurrentWriter(Writer):
         yield True
         self.write(u'**')
 
-    def write_Reference(self, node):
+    def write_InlineExtension(self, node):
         self.write(u'[')
-        if node.target != node.text:
+        if node.text is not None:
             self.write(node.text)
             self.write(u'][')
         if node.type is not None:
             self.write(node.type)
             self.write(u'|')
-        self.write(node.target)
+        self.write(node.primary)
         self.write(u']')
-        if node.signature is not None:
+        if node.secondary is not None:
             self.write(u'(')
-            self.write(node.signature)
+            self.write(node.secondary)
             self.write(u')')
+
+    def write_Extension(self, node):
+        self.write(u'[')
+        if node.type is not None:
+            self.write(node.type)
+            self.write(u'|')
+        self.write(node.primary)
+        self.write(u']:')
+        if node.secondary is not None:
+            self.write(u' ')
+            self.write(node.secondary)
+        self.newline()
+        with self.indent(u' ' * 4):
+            self.write_lines(node.body)
 
     def write_Definition(self, node):
         self.write(u'[')
