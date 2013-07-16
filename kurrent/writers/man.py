@@ -9,6 +9,8 @@
 from datetime import datetime
 from contextlib import contextmanager
 
+import babel.dates
+
 from .base import Writer
 
 
@@ -107,7 +109,11 @@ class Translator(object):
         return Document(
             title=node.metadata.get('title', u''),
             section=node.metadata.get('section', 1),
-            date=datetime.now().strftime(u'%d %B %Y'),
+            date=babel.dates.format_date(
+                datetime.now(),
+                format='full',
+                locale=node.metadata.get('locale', babel.default_locale())
+            ),
             children=self.translate_children(node)
         )
 

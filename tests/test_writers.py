@@ -31,7 +31,10 @@ class WriterTest(object):
 
     def match_node(self, node, regex):
         __tracebackhide__ = True
-        assert re.match(regex, self.render_node(node)) is not None
+        content = self.render_node(node)
+        match = re.match(regex, content)
+        assert match is not None
+        assert match.group() == content
 
 
 class TestKurrentWriter(WriterTest):
@@ -457,7 +460,23 @@ class TestManWriter(WriterTest):
 
     def test_document(self):
         document = ast.Document('<test>', metadata={'title': u'foo'})
-        self.match_node(document, u'.TH "foo" "1" "\d{2} \w+ \d{4}" ""')
+        self.match_node(document, u'.TH "foo" "1" "[^"]+" ""')
+
+        document = ast.Document(
+            '<test>', metadata={'title': u'foo', 'locale': 'de_DE'}
+        )
+        self.match_node(
+            document,
+            u'.TH "foo" "1" "\w+, \d{2}\. \w+ \d{4}" ""'
+        )
+
+        document = ast.Document(
+            '<test>', metadata={'title': u'foo', 'locale': 'en_GB'}
+        )
+        self.match_node(
+            document,
+            u'.TH "foo" "1" "\w+, \d{2} \w+ \d{4}" ""'
+        )
 
     def test_header(self):
         header = ast.Header(u'foo', 1)

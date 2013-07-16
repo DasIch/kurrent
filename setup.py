@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+import sys
 import codecs
 
 from setuptools import setup
@@ -15,6 +16,10 @@ def get_version():
             if line.startswith(u'__version__'):
                 return line.split(u'=')[1].replace(u"'", u'').strip()
     raise ValueError('__version__ not found in %s' % init_file_path)
+
+
+if sys.version_info[0] == 2:
+    babel_requirement = 'Babel>=0.9.6'
 
 
 setup(
@@ -33,7 +38,8 @@ setup(
     },
     install_requires=[
         'MarkupSafe>=0.18',
-        'docopt>=0.6.1'
+        'docopt>=0.6.1',
+        'Babel>=0.9.6'
     ],
     classifiers=[
         'License :: OSI Approved :: BSD License',
