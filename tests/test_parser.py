@@ -318,7 +318,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'[foo'
 
-    def test_only_missing_target(self):
+    def test_only_missing_primary(self):
         document = Parser.from_string(u'[]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -327,7 +327,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'[]'
 
-    def test_only_missing_target_closing_bracket(self):
+    def test_only_missing_primary_closing_bracket(self):
         document = Parser.from_string(u'[').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -366,7 +366,7 @@ class TestInlineExtension(object):
         assert len(p.children) == 1
         assert p.children[0].text == u'[foo|bar'
 
-    def test_only_with_type_missing_target(self):
+    def test_only_with_type_missing_primary(self):
         document = Parser.from_string(u'[foo|]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -374,7 +374,7 @@ class TestInlineExtension(object):
         assert len(p.children) == 1
         assert p.children[0].text == u'[foo|]'
 
-    def test_only_with_type_missing_target_closing_bracket(self):
+    def test_only_with_type_missing_primary_closing_bracket(self):
         document = Parser.from_string(u'[foo|').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -382,7 +382,7 @@ class TestInlineExtension(object):
         assert len(p.children) == 1
         assert p.children[0].text == u'[foo|'
 
-    def test_only_with_inline_definition(self):
+    def test_only_with_secondary(self):
         document = Parser.from_string(u'[foo](bar)').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -402,7 +402,7 @@ class TestInlineExtension(object):
         assert r.text is None
         assert r.metadata == {}
 
-    def test_only_with_inline_definition_missing_closing_paren(self):
+    def test_only_with_secondary_missing_closing_paren(self):
         document = Parser.from_string(u'[foo](bar').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -422,7 +422,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(bar'
 
-    def test_only_with_inline_definition_missing_definition(self):
+    def test_only_with_secondary_missing_definition(self):
         document = Parser.from_string(u'[foo]()').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -442,7 +442,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
-    def test_only_with_inline_definition_missing_definition_closing_paren(self):
+    def test_only_with_secondary_missing_secondary_closing_paren(self):
         document = Parser.from_string(u'[foo](').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -462,7 +462,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
-    def test_only_with_type_and_inline_definition(self):
+    def test_only_with_type_and_secondary(self):
         document = Parser.from_string(u'[foo|bar](baz)').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -484,7 +484,7 @@ class TestInlineExtension(object):
         assert r.text is None
         assert r.metadata == {}
 
-    def test_only_with_type_and_inline_definition_missing_paren(self):
+    def test_only_with_type_and_secondary_missing_paren(self):
         document = Parser.from_string(u'[foo|bar](baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -505,7 +505,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(baz'
 
-    def test_only_with_type_and_inline_definition_missing_definition(self):
+    def test_only_with_type_and_secondary_missing_secondary(self):
         document = Parser.from_string(u'[foo|bar]()').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -527,7 +527,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
-    def test_only_with_type_and_inline_definition_missing_definition_paren(self):
+    def test_only_with_type_and_secondary_missing_secondary_paren(self):
         document = Parser.from_string(u'[foo|bar](').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -585,7 +585,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar'
 
-    def test_only_with_text_missing_target(self):
+    def test_only_with_text_missing_primary(self):
         document = Parser.from_string(u'[foo][]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -605,7 +605,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[]'
 
-    def test_only_with_text_missing_target_bracket(self):
+    def test_only_with_text_missing_primary_bracket(self):
         document = Parser.from_string(u'[foo][').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -667,7 +667,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|baz'
 
-    def test_only_with_text_and_type_missing_target(self):
+    def test_only_with_text_and_type_missing_primary(self):
         document = Parser.from_string(u'[foo][bar|]').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -687,7 +687,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|]'
 
-    def test_only_with_text_and_type_missing_target_bracket(self):
+    def test_only_with_text_and_type_missing_primary_bracket(self):
         document = Parser.from_string(u'[foo][bar|').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -707,7 +707,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'[bar|'
 
-    def test_only_with_text_and_definition(self):
+    def test_only_with_text_and_secondary(self):
         document = Parser.from_string(u'[foo][bar](baz)').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -729,7 +729,7 @@ class TestInlineExtension(object):
         assert r.secondary.end == ast.Location(1, 15)
         assert r.metadata == {}
 
-    def test_only_with_text_and_definition_missing_paren(self):
+    def test_only_with_text_and_secondary_missing_paren(self):
         document = Parser.from_string(u'[foo][bar](baz').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -751,7 +751,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(baz'
 
-    def test_only_with_text_and_definition_missing_target(self):
+    def test_only_with_text_and_secondary_missing_primary(self):
         document = Parser.from_string(u'[foo][bar]()').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -773,7 +773,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
-    def test_only_with_text_and_definition_missing_target_paren(self):
+    def test_only_with_text_and_secondary_missing_primary_paren(self):
         document = Parser.from_string(u'[foo][bar](').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -795,7 +795,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'('
 
-    def test_only_with_text_and_type_and_definition(self):
+    def test_only_with_text_and_type_and_secondary(self):
         document = Parser.from_string(u'[foo][bar|baz](spam)').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -819,7 +819,7 @@ class TestInlineExtension(object):
         assert r.secondary.end == ast.Location(1, 20)
         assert r.metadata == {}
 
-    def test_only_with_text_and_type_and_definition_missing_paren(self):
+    def test_only_with_text_and_type_and_secondary_missing_paren(self):
         document = Parser.from_string(u'[foo][bar|baz](spam').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -843,7 +843,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'(spam'
 
-    def test_only_with_text_and_type_and_definition_missing_definition(self):
+    def test_only_with_text_and_type_and_secondary_missing_definition(self):
         document = Parser.from_string(u'[foo][bar|baz]()').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
@@ -867,7 +867,7 @@ class TestInlineExtension(object):
         assert isinstance(p.children[1], ast.Text)
         assert p.children[1].text == u'()'
 
-    def test_only_with_text_and_type_and_definition_missing_definition_paren(self):
+    def test_only_with_text_and_type_and_secondary_missing_definition_paren(self):
         document = Parser.from_string(u'[foo][bar|baz](').parse()
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Paragraph)
