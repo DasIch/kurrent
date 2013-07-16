@@ -42,6 +42,4 @@ class TitleTransformation(Transformation):
         raise StopTransformation()
 
 
-CORE_TRANSFORMATIONS = [
-    TitleTransformation
-]
+CORE_TRANSFORMATIONS = [TitleTransformation]
