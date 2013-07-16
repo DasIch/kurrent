@@ -327,6 +327,42 @@ class TestHTML5Writer(WriterTest):
             u'</pre>'
         )
 
+    def test_write_definition_list(self):
+        dl = ast.DefinitionList(children=[
+            ast.Definition(
+                [ast.Text(u'foo')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'bar')
+                ])]
+            ),
+            ast.Definition(
+                [ast.Text(u'spam')],
+                [ast.Paragraph(children=[
+                    ast.Text(u'eggs')
+                ])]
+            )
+        ])
+        self.check_node(dl,
+            u'<dl>\n'
+            u'  <dt>\n'
+            u'    foo\n'
+            u'  </dt>\n'
+            u'  <dd>\n'
+            u'    <p>\n'
+            u'      bar\n'
+            u'    </p>\n'
+            u'  </dd>\n'
+            u'  <dt>\n'
+            u'    spam\n'
+            u'  </dt>\n'
+            u'  <dd>\n'
+            u'    <p>\n'
+            u'      eggs\n'
+            u'    </p>\n'
+            u'  </dd>\n'
+            u'</dl>'
+        )
+
 
 class TestManWriter(WriterTest):
     writer_cls = ManWriter

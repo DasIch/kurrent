@@ -45,6 +45,7 @@ class HTML5Writer(Writer):
     write_OrderedList = make_block_writer(u'ol')
     write_UnorderedList = make_block_writer(u'ul')
     write_BlockQuote = make_block_writer(u'blockquote')
+    write_DefinitionList = make_block_writer(u'dl')
     write_Emphasis = make_block_writer(u'em', indent=False)
     write_Strong = make_block_writer(u'strong', indent=False)
 
@@ -70,3 +71,16 @@ class HTML5Writer(Writer):
             self.write_line(line)
         self.indent_stack = indent_stack
         self.write_line(u'</pre>')
+
+    def write_Definition(self, node):
+        self.write_line(u'<dt>')
+        with self.indent(u'  '):
+            for child in node.term:
+                self.write_node(child)
+        self.newline()
+        self.write_line(u'</dt>')
+        self.write_line(u'<dd>')
+        with self.indent(u'  '):
+            for child in node.description:
+                self.write_node(child)
+        self.write_line(u'</dd>')
