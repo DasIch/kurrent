@@ -107,6 +107,11 @@ class ASTNodeTest(object):
         assert document.children[0] is replacing
         assert replacing.parent is document
 
+    def test_remove_from_parent(self, node):
+        document = Document('test', children=[node])
+        node.remove_from_parent()
+        assert not document.children
+
 
 class ParentNodeTest(ASTNodeTest):
     def test_init(self, node_cls):
