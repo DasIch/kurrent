@@ -91,6 +91,9 @@ class ParentNode(ASTNode):
         new.parent = self
         self.children[index] = new
 
+    def remove(self, node):
+        self.children.remove(node)
+
     def traverse(self):
         yield self
         for child in self.children:
