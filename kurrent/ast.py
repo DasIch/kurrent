@@ -255,3 +255,16 @@ class Definition(ASTNode):
         return '%s(%r, %r, parent=%r)' % (
             self.__class__.__name__, self.term, self.description, self.parent
         )
+
+
+class Link(ChildNode):
+    def __init__(self, target, text, start=None, end=None, parent=None):
+        super(Link, self).__init__(start=start, end=end, parent=parent)
+        self.target = target
+        self.text = text
+
+    def __repr__(self):
+        return '%s(%r, %r, start=%r, end=%r, parent=%r)' % (
+            self.__class__.__name__, self.target, self.text, self.start,
+            self.end, self.parent
+        )

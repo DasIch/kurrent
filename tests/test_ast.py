@@ -11,7 +11,7 @@ import pytest
 from kurrent.ast import (
     Location, Document, Paragraph, Emphasis, Strong, Text, Header,
     UnorderedList, OrderedList, ListItem, InlineExtension, Extension,
-    BlockQuote, RawBlock, DefinitionList, Definition
+    BlockQuote, RawBlock, DefinitionList, Definition, Link
 )
 
 
@@ -457,3 +457,14 @@ class TestDefinition(ASTNodeTest):
 
     def test_repr(self):
         assert repr(Definition([], [])) == 'Definition([], [], parent=None)'
+
+
+class TestLink(ASTNodeTest):
+    @pytest.fixture
+    def node_cls(self):
+        return lambda *args, **kwargs: Link('target', 'text', *args, **kwargs)
+
+    def test_repr(self):
+        assert repr(Link('target', 'text')) == (
+            "Link('target', 'text', start=None, end=None, parent=None)"
+        )

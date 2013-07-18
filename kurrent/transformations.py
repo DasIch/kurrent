@@ -42,4 +42,35 @@ class TitleTransformation(Transformation):
         raise StopTransformation()
 
 
+class LinkExtensionTransformation(Transformation):
+    def select_node(self, node):
+        return isinstance(node, ast.Extension) and node.type is None
+
+    def transform(self, node):
+        links = self.context.setdefault('links', {})
+        assert node.primary not in links, links
+        assert not node.body, node.body
+        links[node.primary] = node.secondary
+        node.remove_from_parent()
+
+
+class LinkInlineExtensionTransformation(Transformation):
+    def select_node(self, node):
+        return isinstance(node, ast.InlineExtension) and node.type is None
+
+    def transform(self, node):
+        links = self.context.get('links', {})
+        if node.primary in links:
+            target = links[node.primary]
+            text = node.primary if node.text is None else node.text
+        elif node.text is None:
+            target = text = node.primary
+        else:
+            target, text = node.primary, node.text
+        assert node.secondary is None, node.secondary
+        node.replace_in_parent(ast.Link(
+            target, text, start=node.start, end=node.end
+        ))
+
+
 CORE_TRANSFORMATIONS = [TitleTransformation]
