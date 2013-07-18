@@ -39,7 +39,9 @@ class TestLineIterator(object):
         assert line == u'bar'
 
     def test_until(self):
-        iterator = LineIterator([u'foo', u'bar', u'baz']).until(lambda l: l == u'baz')
+        iterator = LineIterator([u'foo', u'bar', u'baz']).until(
+            lambda l: l == u'baz'
+        )
         for lineno, content in enumerate([u'foo', u'bar'], 1):
             line = next(iterator)
             assert line == content
