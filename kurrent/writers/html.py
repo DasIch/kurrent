@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 from markupsafe import escape
 
+from ..transformations import LINK_TRANSFORMATIONS
 from .base import Writer
 
 
@@ -33,6 +34,8 @@ def make_block_writer(tag, indent=True, follow_with_newline=False):
 
 
 class HTML5Writer(Writer):
+    transformations = LINK_TRANSFORMATIONS[:]
+
     @classmethod
     def get_file_extension(self, document):
         return '.html'
@@ -84,3 +87,8 @@ class HTML5Writer(Writer):
             for child in node.description:
                 self.write_node(child)
         self.write_line(u'</dd>')
+
+    def write_Link(self, node):
+        self.write(u'<a href="%s">' % node.target)
+        self.write(node.text)
+        self.write(u'</a>')

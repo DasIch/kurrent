@@ -366,6 +366,10 @@ class TestHTML5Writer(WriterTest):
             u'</dl>'
         )
 
+    def test_write_link(self):
+        link = ast.Link(u'target', u'text')
+        self.check_node(link, u'<a href="target">text</a>')
+
 
 class TestManWriter(WriterTest):
     writer_cls = ManWriter

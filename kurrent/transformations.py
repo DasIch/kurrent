@@ -74,3 +74,6 @@ class LinkInlineExtensionTransformation(Transformation):
 
 
 CORE_TRANSFORMATIONS = [TitleTransformation]
+LINK_TRANSFORMATIONS = [
+    LinkExtensionTransformation, LinkInlineExtensionTransformation
+]
