@@ -238,6 +238,16 @@ class LineIterator(TransactionIterator):
         self.lineno = lineno
         self.columnno = columnno
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self.close()
+
+    def close(self):
+        if hasattr(self._iterator, 'close'):
+            self._iterator.close()
+
     def __next__(self):
         try:
             if PY2:
@@ -310,34 +320,35 @@ class Parser(object):
 
     @classmethod
     def from_path(cls, path):
-        return cls(codecs.open(path, 'r', encoding=cls.encoding),
-                   filename=path)
+        return cls.from_stream(codecs.open(path, 'r', encoding=cls.encoding),
+                               filename=path)
 
     @classmethod
     def from_string(cls, string):
-        return cls(io.StringIO(string), filename='<string>')
+        return cls.from_stream(io.StringIO(string), filename='<string>')
 
     @classmethod
     def from_bytes(cls, bytes):
         bytestream = io.BytesIO(bytes)
         stringstream = codecs.lookup(cls.encoding).streamreader(bytestream)
-        return cls(stringstream, filename='<string>')
+        return cls.from_stream(stringstream, filename='<string>')
 
-    def __init__(self, stream, filename=None):
-        self.stream = stream
+    @classmethod
+    def from_stream(cls, stream, filename=None):
         if filename is None:
-            self.filename = self.stream.name
-        else:
-            self.filename = filename
+            filename = stream.filename
+        return cls(LineIterator(stream), filename)
 
-        self.lines = LineIterator(self.stream)
+    def __init__(self, lineiterator, filename=None):
+        self.lines = lineiterator
+        self.filename = filename
 
     def __enter__(self):
+        self.lines.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_value, tb):
-        if hasattr(self.stream, 'close'):
-            self.stream.close()
+    def __exit__(self, *exc_info):
+        self.lines.__exit__(*exc_info)
 
     def parse(self):
         return ast.Document(
