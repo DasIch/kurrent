@@ -19,6 +19,10 @@ class SingleDocumentBuilder(object):
         self.target_dir = target_dir
         self.writer_cls = writer_cls
 
+    @property
+    def transformations(self):
+        return CORE_TRANSFORMATIONS + self.writer_cls.transformations
+
     def get_target_path(self, document):
         extension = self.writer_cls.get_file_extension(document)
         return os.path.join(
@@ -36,7 +40,7 @@ class SingleDocumentBuilder(object):
 
     def apply_transformations(self, document):
         context = {}
-        for transformation_cls in CORE_TRANSFORMATIONS:
+        for transformation_cls in self.transformations:
             transformation_cls(document, context).apply()
 
     def write(self, document):

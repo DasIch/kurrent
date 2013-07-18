@@ -10,6 +10,8 @@ from contextlib import contextmanager
 
 
 class Writer(object):
+    transformations = []
+
     @classmethod
     def get_file_extension(self, document):
         raise NotImplementedError()
