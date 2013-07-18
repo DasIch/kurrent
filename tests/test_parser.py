@@ -1394,9 +1394,15 @@ class TestExtension(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(1, 11)
         assert d.type is None
         assert d.primary == u'foo'
+        assert d.primary.start == ast.Location(1, 2)
+        assert d.primary.end == ast.Location(1, 5)
         assert d.secondary == u'bar'
+        assert d.secondary.start == ast.Location(1, 8)
+        assert d.secondary.end == ast.Location(1, 11)
         assert d.body == []
 
     def test_simple_with_type(self):
@@ -1404,9 +1410,17 @@ class TestExtension(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(1, 15)
         assert d.type == u'foo'
+        assert d.type.start == ast.Location(1, 2)
+        assert d.type.end == ast.Location(1, 5)
         assert d.primary == u'bar'
+        assert d.primary.start == ast.Location(1, 6)
+        assert d.primary.end == ast.Location(1, 9)
         assert d.secondary == u'baz'
+        assert d.secondary.start == ast.Location(1, 12)
+        assert d.secondary.end == ast.Location(1, 15)
         assert d.body == []
 
     def test_simple_with_body(self):
@@ -1420,10 +1434,20 @@ class TestExtension(object):
         assert len(document.children) == 2
         assert isinstance(document.children[0], ast.Extension)
         d = document.children[0]
+        assert d.start == ast.Location(1, 1)
+        assert d.end == ast.Location(3, 7)
         assert d.type is None
         assert d.primary == u'foo'
+        assert d.primary.start == ast.Location(1, 2)
+        assert d.primary.end == ast.Location(1, 5)
         assert d.secondary == u'bar'
+        assert d.secondary.start == ast.Location(1, 8)
+        assert d.secondary.end == ast.Location(1, 11)
         assert d.body == [u'hello', u'world']
+        assert d.body[0].start == ast.Location(2, 2)
+        assert d.body[0].end == ast.Location(2, 7)
+        assert d.body[1].start == ast.Location(3, 2)
+        assert d.body[1].end == ast.Location(3, 7)
 
         assert isinstance(document.children[1], ast.Paragraph)
         p = document.children[1]

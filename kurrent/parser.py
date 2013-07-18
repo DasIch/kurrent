@@ -441,19 +441,31 @@ class Parser(object):
         if match is None:
             raise BadPath()
         bracket = match.group(1)
-        secondary = match.group(2)
+        secondary = Line(
+            match.group(2), line.lineno, line.columnno + match.start(2)
+        )
         match = _extension_bracket_re.match(bracket)
         if match.group(2) is None:
             type = None
-            primary = match.group(1)
+            primary = Line(
+                match.group(1), line.lineno, line.columnno + match.start(1) + 1
+            )
         else:
-            type, primary = match.groups()
+            type = Line(
+                match.group(1), line.lineno, line.columnno + match.start(1) + 1
+            )
+            primary = Line(
+                match.group(2), line.lineno, line.columnno + match.start(2) + 1
+            )
         body = list(lines.unindented())
         for i in range(len(body) - 1, 0, -1):
             if body[i]:
                 break
             del body[i]
-        return ast.Extension(type, primary, secondary=secondary, body=body)
+        return ast.Extension(
+            type, primary, secondary=secondary, body=body, start=line.start,
+            end=body[-1].end if body else line.end
+        )
 
     def parse_quote(self, lines):
         rv = ast.BlockQuote()
