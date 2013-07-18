@@ -1464,9 +1464,13 @@ class TestQuote(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.BlockQuote)
         b = document.children[0]
+        assert b.start == ast.Location(1, 1)
+        assert b.end == ast.Location(1, 6)
         assert len(b.children) == 1
         assert isinstance(b.children[0], ast.Paragraph)
         p = b.children[0]
+        assert p.start == ast.Location(1, 3)
+        assert p.end == ast.Location(1, 6)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'foo'
@@ -1479,9 +1483,13 @@ class TestQuote(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.BlockQuote)
         b = document.children[0]
+        assert b.start == ast.Location(1, 1)
+        assert b.end == ast.Location(2, 6)
         assert len(b.children) == 1
         assert isinstance(b.children[0], ast.Paragraph)
         p = b.children[0]
+        assert p.start == ast.Location(1, 3)
+        assert p.end == ast.Location(2, 6)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'foo bar'
@@ -1495,19 +1503,27 @@ class TestQuote(object):
         assert len(document.children) == 1
         assert isinstance(document.children[0], ast.BlockQuote)
         outer_quote = document.children[0]
+        assert outer_quote.start == ast.Location(1, 1)
+        assert outer_quote.end == ast.Location(3, 6)
         assert len(outer_quote.children) == 2
 
         assert isinstance(outer_quote.children[0], ast.BlockQuote)
         inner_quote = outer_quote.children[0]
+        assert inner_quote.start == ast.Location(1, 3)
+        assert inner_quote.end == ast.Location(1, 8)
         assert len(inner_quote.children) == 1
         assert isinstance(inner_quote.children[0], ast.Paragraph)
         p = inner_quote.children[0]
+        assert p.start == ast.Location(1, 5)
+        assert p.end == ast.Location(1, 8)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'foo'
 
         assert isinstance(outer_quote.children[1], ast.Paragraph)
         p = outer_quote.children[1]
+        assert p.start == ast.Location(3, 3)
+        assert p.end == ast.Location(3, 6)
         assert len(p.children) == 1
         assert isinstance(p.children[0], ast.Text)
         assert p.children[0].text == u'bar'
