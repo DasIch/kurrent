@@ -178,6 +178,14 @@ class ParentNodeTest(ASTNodeTest):
         assert node.children[0] is replacing
         assert replacing.parent is node
 
+    def test_replace_with_multiple(self, node):
+        to_be_replaced = Text(u'foo')
+        replacing = [Text(u'bar'), Text(u'baz')]
+        node.add_child(to_be_replaced)
+        assert node.children == [to_be_replaced]
+        node.replace(to_be_replaced, replacing)
+        assert node.children == replacing
+
     def test_remove(self, node):
         child = Text(u'foo')
         node.add_child(child)

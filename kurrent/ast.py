@@ -7,6 +7,7 @@
     :license: BSD, see LICENSE.rst for details
 """
 from itertools import chain
+from collections import Iterable
 
 
 class Location(object):
@@ -91,8 +92,12 @@ class ParentNode(ASTNode):
 
     def replace(self, old, new):
         index = self.children.index(old)
-        new.parent = self
-        self.children[index] = new
+        del self.children[index]
+        if not isinstance(new, Iterable):
+            new = [new]
+        for node in reversed(new):
+            node.parent = self
+            self.children.insert(index, node)
 
     def remove(self, node):
         self.children.remove(node)
