@@ -39,7 +39,7 @@ setup(
     install_requires=[
         'MarkupSafe>=0.18',
         'docopt>=0.6.1',
-        'Babel>=0.9.6'
+        'Babel>=1.0'
     ],
     classifiers=[
         'License :: OSI Approved :: BSD License',
